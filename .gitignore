@@ -1,0 +1,4 @@
+.vscode
+secrets
+dist
+node_modules

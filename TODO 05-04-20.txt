@@ -1,0 +1,28 @@
+TODO:
+- put trick back (will require tricksWon to be Card[][][])
+- move play trick button below cards
+- new initial screen: spectate or join game (if seats are available)
+- play requires password
+- kick player if idle for 5 minutes
+- kick spectator if idle for 30 minutes?
+- show who played last hand
+- new server messages:
+    - welcome: number of players/available spots, number of spectators, game in progress?
+    - you're about to be kicked
+    - you've been kicked
+    - all spots are taken, you can't join
+    - password correct/incorrect
+- new client messages:
+    - join game
+    - spectate
+    - I'm still alive (to prevent being kicked)
+- spectator view
+    - move client UI guts (except loading/disconnected) to PlayerUI
+    - add SpectatorUI
+    - add SpectatorStateView
+    - replace ClientUI with join-or-spectate screen
+    - when socket first connects, send welcome (see above)
+- notifications
+    - vertical list of items that slowly vanished or can be dismissed
+    - only stored in client ui state, generated from server messages
+    - examples: 

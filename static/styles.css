@@ -1,0 +1,325 @@
+/* CSS Reset */
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+font,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+caption {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    vertical-align: baseline;
+    background: transparent;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+#main {
+    font: 15px solid black;
+    font-family: "Signika", sans-serif;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+p {
+    padding: 2px;
+}
+button {
+    font-weight: bold;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 10px;
+}
+hr {
+    background-color: #fff;
+    height: 4px;
+    border-radius: 2px;
+    border: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin: 10px;
+}
+
+.backdrop {
+    position: sticky;
+    overflow: hidden;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background-position: center;
+    background-size: cover;
+}
+.main-content {
+    width: 800px;
+    min-width: 800px;
+    height: 100%;
+    margin: 0 auto;
+    overflow-x: auto;
+    overflow-y: auto;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.card-small {
+    display: inline-block;
+    background-position: center;
+    background-size: cover;
+    border: 1px solid #880000;
+}
+.card-medium {
+    display: inline-block;
+    background-position: center;
+    background-size: cover;
+    border: 2px solid #880000;
+}
+.card-large {
+    display: inline-block;
+    background-position: center;
+    background-size: cover;
+    border: 2px solid #880000;
+}
+.join-phase-form {
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.4);
+}
+.other-players-pass-phase {
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    display: flex;
+}
+.other-player-passing {
+    margin: 5px;
+    padding: 5px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    flex: 1;
+    text-align: center;
+}
+.your-hand-pass-phase {
+    display: flex;
+    flex-wrap: wrap;
+}
+.card-in-hand-during-pass {
+    width: 20%;
+    min-width: 20%;
+    flex: 1;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.card-in-hand-during-pass-inner {
+    width: 130px;
+    padding: 5px;
+    border-radius: 10px;
+    margin: 0 auto;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+.pass-btn {
+    margin: 2px;
+    padding: 2px;
+    width: 120px;
+}
+.passing-to {
+    padding: 0;
+    margin: 0 auto;
+    text-align: center;
+}
+.card-in-your-hand-play-phase {
+    display: inline-block;
+}
+.staged-card-play-phase {
+    display: inline-block;
+}
+.cards-heap {
+    display: inline-block;
+}
+.cards-overlapping {
+    display: inline-block;
+}
+.cards-side-by-side {
+    display: inline-block;
+}
+.rows-of-cards {
+    display: flex;
+    flex-direction: column-reverse;
+    flex-wrap: nowrap;
+}
+.row-in-rows-of-cards {
+}
+.game-header {
+    padding: 10px;
+}
+.game-header-phase {
+}
+.game-header-name {
+}
+.all-pending-players {
+    width: 100%;
+    display: flex;
+}
+.pending-player {
+    flex: 1;
+    min-height: 100px;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    text-align: center;
+}
+.claimed-position {
+    display: inline-block;
+}
+.unclaimed-position {
+    display: inline-block;
+}
+.button-and-check-mark {
+}
+.card-being-passed {
+    min-height: 200px;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    flex: 1;
+    position: relative;
+    text-align: center;
+}
+.card-being-passed-inner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.other-hands-pass-phase {
+    display: flex;
+}
+.other-hands-play-phase {
+    display: flex;
+}
+.other-player-play-phase {
+    flex: 1;
+    margin: 5px;
+    padding: 5px;
+    text-align: center;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+.current-trick {
+    min-height: 100px;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.4);
+    text-align: center;
+}
+.staging-area {
+    min-height: 100px;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    text-align: center;
+}
+.your-hand-play-phase {
+    min-height: 100px;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    text-align: center;
+}
+.your-cards-play-phase {
+    display: flex;
+    flex-wrap: wrap;
+}
+.card-in-hand-play-phase-inner {
+    flex: 1;
+    margin: 5px;
+}
+.tricks-youve-won {
+}
+.player-hand-score-phase {
+    margin: 5px;
+    padding: 5px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+.player-hand-score-phase-cards {
+    display: flex;
+    flex-wrap: wrap;
+}
+.player-card-score-phase {
+    margin: 5px;
+    flex: 1;
+}
+.other-hands-score-phase {
+}
+.text-field {
+    padding: 10px;
+}

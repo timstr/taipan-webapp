@@ -1,0 +1,31 @@
+{
+    "name": "godsinthemachine",
+    "version": "1.0.0",
+    "description": "TaiPan web-app just for me and my friends",
+    "main": "index.js",
+    "author": "timstr",
+    "license": "WTFPL",
+    "private": true,
+    "scripts": {
+        "build": "webpack"
+    },
+    "dependencies": {
+        "node-static": "^0.7.11",
+        "react": "^16.13.1",
+        "react-dom": "^16.13.1",
+        "ws": "^7.2.3"
+    },
+    "devDependencies": {
+        "@types/node-static": "^0.7.3",
+        "@types/react": "^16.9.31",
+        "@types/react-dom": "^16.9.6",
+        "@types/ws": "^7.2.3",
+        "awesome-typescript-loader": "^5.2.1",
+        "copy-webpack-plugin": "^5.1.1",
+        "source-map-loader": "^0.2.4",
+        "ts-loader": "^6.2.2",
+        "typescript": "^3.8.3",
+        "webpack": "^4.42.1",
+        "webpack-cli": "^3.3.11"
+    }
+}
