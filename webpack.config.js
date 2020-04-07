@@ -1,19 +1,17 @@
 const webpack = require("webpack");
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 const mode =
     process.env.NODE_ENV === "production" ? "production" : "development";
 
 console.log(`NOTE: building in ${mode} mode`);
 
-const commonConfig = {
+let commonConfig = {
     context: path.resolve(__dirname, "src/"),
 
     mode,
-
-    // Enable sourcemaps for debugging webpack's output.
-    devtool: "source-map",
 
     resolve: {
         // Add '.ts' and '.tsx' as resolvable extensions.
@@ -30,6 +28,11 @@ const commonConfig = {
         ],
     },
 };
+
+if (mode === "development") {
+    // Enable sourcemaps for debugging webpack's output.
+    commonConfig.devtool = "source-map";
+}
 
 const serverConfig = {
     ...commonConfig,
@@ -49,6 +52,8 @@ const serverConfig = {
         filename: "main.js",
         path: path.resolve(__dirname, "dist/server/"),
     },
+
+    plugins: [new CleanWebpackPlugin()],
 };
 
 const clientConfig = {
@@ -75,6 +80,7 @@ const clientConfig = {
     },
 
     plugins: [
+        new CleanWebpackPlugin(),
         new CopyPlugin([
             {
                 from: "../static",

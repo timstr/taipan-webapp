@@ -8,11 +8,9 @@ import {
     GameStateJoinPhase,
     PlayerIndex,
     PlayerProfile,
-    validatePlayerIndex,
     GameStatePassPhase,
     GameStatePlayPhase,
     GameState,
-    validatePlayerPosition,
     GamePhase,
     AllPlayerIndices,
     ScorePhase,
@@ -35,6 +33,8 @@ import {
     getNullableCard,
     getCardDoubleStack,
     getCardTripleStack,
+    validatePlayerIndex,
+    validatePlayerPosition,
 } from "../parsehelpers";
 
 export interface GameStateJoinPhaseView {

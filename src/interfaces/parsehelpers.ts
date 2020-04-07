@@ -1,4 +1,4 @@
-import { PlayerProfile, validatePlayerPosition } from "./game/state";
+import { PlayerProfile, AllPlayerIndices } from "./game/state";
 import {
     Card,
     AllSpecialCards,
@@ -13,7 +13,30 @@ import {
     CardTripleStack,
     flattenTripleStack,
 } from "./cards";
-import { PlayerPosition, RelativePlayerPosition } from "./game/position";
+import {
+    PlayerPosition,
+    RelativePlayerPosition,
+    AllPlayerPositions,
+} from "./game/position";
+
+export function validatePlayerIndex(idx: any) {
+    if (typeof idx === "number") {
+        const x = AllPlayerIndices.findIndex((i) => i === idx);
+        if (x >= 0) {
+            return AllPlayerIndices[x];
+        }
+    }
+    throw new Error("Invalid player index");
+}
+export function validatePlayerPosition(pos: any) {
+    if (typeof pos === "string") {
+        const x = AllPlayerPositions.findIndex((p) => p === pos);
+        if (x >= 0) {
+            return AllPlayerPositions[x];
+        }
+    }
+    throw new Error("Invalid player index");
+}
 
 /**
  * Gets a value with a specific key and type or throws an exception
@@ -161,13 +184,20 @@ export function validateRelativePosition(x: any): RelativePlayerPosition {
         );
     }
     const xx = x as RelativePlayerPosition;
-    switch (xx) {
-        case "Left":
-        case "Opposite":
-        case "Right":
-            return xx;
+    const pos = ((): RelativePlayerPosition => {
+        switch (xx) {
+            case "Left":
+            case "Opposite":
+            case "Right":
+                return xx;
+        }
+    })();
+    if (pos === undefined) {
+        throw new Error(
+            `Invalid relative player position: ${JSON.stringify(x)}`
+        );
     }
-    throw new Error(`Invalid relative player position: ${JSON.stringify(x)}`);
+    return pos;
 }
 
 export function validateCardSuite(v: any): CardSuite {

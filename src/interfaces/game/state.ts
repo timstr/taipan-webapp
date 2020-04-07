@@ -18,30 +18,11 @@ import {
     flattenTripleStack,
     concatStacks,
 } from "../cards";
-import { PlayerPosition, AllPlayerPositions } from "./position";
+import { PlayerPosition } from "./position";
 import { leftOpponentOf, partnerOf, rightOpponentOf } from "./stateview";
 
 export type PlayerIndex = 0 | 1 | 2 | 3;
 export const AllPlayerIndices: PlayerIndex[] = [0, 1, 2, 3];
-
-export function validatePlayerIndex(idx: any) {
-    if (typeof idx === "number") {
-        const x = AllPlayerIndices.findIndex((i) => i === idx);
-        if (x >= 0) {
-            return AllPlayerIndices[x];
-        }
-    }
-    throw new Error("Invalid player index");
-}
-export function validatePlayerPosition(pos: any) {
-    if (typeof pos === "string") {
-        const x = AllPlayerPositions.findIndex((p) => p === pos);
-        if (x >= 0) {
-            return AllPlayerPositions[x];
-        }
-    }
-    throw new Error("Invalid player index");
-}
 
 export interface PlayerProfile {
     readonly name: string;
@@ -139,6 +120,10 @@ export type GameState =
 
 export type GamePhase = GameState["phase"];
 export const AllGamePhases: GamePhase[] = [JoinPhase, PassPhase, PlayPhase];
+
+export type AllPlayersType<S extends GameState> = S["players"];
+
+export type PlayerType<S extends GameState> = AllPlayersType<S>[0];
 
 export const DefaultGameState: GameStateJoinPhase = {
     phase: "Join",
@@ -313,4 +298,45 @@ export function goBackToPassPhase(
         players: [makePlayer(0), makePlayer(1), makePlayer(2), makePlayer(3)],
     };
     return upgradeToPassPhase(joinState);
+}
+
+export function allCardsPassPhase(state: GameStatePassPhase): CardStack {
+    return {
+        cards: state.players.reduce(
+            (arr, p) => arr.concat(p.inHand.cards),
+            [] as Card[]
+        ),
+    };
+}
+
+export function allCardsPlayPhase(state: GameStatePlayPhase): CardStack {
+    const getPlayerCards = (p: PlayerHandPlayPhase): CardStack =>
+        concatStacks(p.inHand, flattenTripleStack(p.tricksWon));
+    return state.players.reduce(
+        (acc, p) => concatStacks(acc, getPlayerCards(p)),
+        EmptyStack
+    );
+}
+
+export function allCardsScorePhase(state: GameStateScorePhase): CardStack {
+    return state.players.reduce(
+        (acc, p) => concatStacks(acc, p.cards),
+        EmptyStack
+    );
+}
+
+type GameStateWithCards =
+    | GameStatePassPhase
+    | GameStatePlayPhase
+    | GameStateScorePhase;
+
+export function allCardsInPlay(state: GameStateWithCards): CardStack {
+    switch (state.phase) {
+        case PassPhase:
+            return allCardsPassPhase(state);
+        case PlayPhase:
+            return allCardsPlayPhase(state);
+        case ScorePhase:
+            return allCardsScorePhase(state);
+    }
 }

@@ -17,6 +17,11 @@ import {
     ScorePhase,
     PlayerProfile,
 } from "../state";
+import {
+    mapGamePlayersFunction,
+    replacePlayerKeyFunction,
+    replacePlayerFunction,
+} from "../updatehelpers";
 
 export const PLAYER_JOINED = "PLAYER_JOINED";
 export const playerJoinedAction = () => createAction(JoinPhase, PLAYER_JOINED);
@@ -86,69 +91,34 @@ export function validateJoinPhaseAction(
     return a;
 }
 
-type PlayerMapFn = (pp: PendingPlayer, i: PlayerIndex) => PendingPlayer;
-
-type RealPendingPlayer = Exclude<PendingPlayer, null>;
-
 export function updateJoinPhase(
     oldState: GameStateJoinPhase,
     player: PlayerIndex,
     action: JoinPhaseAction
 ): GameState {
-    const mapPlayers = (
-        ...fns: PlayerMapFn[]
-    ): GameStateJoinPhase["players"] => {
-        const f: PlayerMapFn = (pp, i) => {
-            for (let fn of fns) {
-                pp = fn(pp, i);
-            }
-            return pp;
-        };
-        const ps = oldState.players;
-        return [f(ps[0], 0), f(ps[1], 1), f(ps[2], 2), f(ps[3], 3)];
-    };
-
-    const replace = <K extends keyof RealPendingPlayer>(
-        idx: PlayerIndex,
-        key: K,
-        newValue: RealPendingPlayer[K]
-    ): PlayerMapFn => {
-        return (pp: PendingPlayer, i: PlayerIndex): PendingPlayer => {
-            if (i === idx) {
-                if (pp !== null) {
-                    let ret = {
-                        ...pp,
-                    };
-                    ret[key] = newValue;
-                    return ret;
-                }
-                console.error("Player was unexpectedly null");
-            }
-            return pp;
-        };
-    };
+    const mapPlayers = mapGamePlayersFunction(oldState);
+    const replace = replacePlayerFunction(oldState);
+    const replaceKey = replacePlayerKeyFunction(oldState);
 
     switch (action.type) {
         case PLAYER_JOINED: {
             return {
                 ...oldState,
-                players: mapPlayers((v, i) =>
-                    i === player ? { ready: false } : v
-                ),
+                players: mapPlayers(replace(player, { ready: false })),
             };
         }
         case PLAYER_LEFT: {
             return {
                 ...oldState,
-                players: mapPlayers((v, i) => (i === player ? null : v)),
+                players: mapPlayers(replace(player, null)),
             };
         }
         case PLAYER_CHOSE_NAME: {
             return {
                 ...oldState,
                 players: mapPlayers(
-                    replace(player, "name", action.payload.name),
-                    replace(player, "ready", false)
+                    replaceKey(player, "name", action.payload.name),
+                    replaceKey(player, "ready", false)
                 ),
             };
         }
@@ -156,19 +126,19 @@ export function updateJoinPhase(
             return {
                 ...oldState,
                 players: mapPlayers(
-                    replace(
+                    replaceKey(
                         player,
                         "position",
                         action.payload.position || undefined
                     ),
-                    replace(player, "ready", false)
+                    replaceKey(player, "ready", false)
                 ),
             };
         }
         case PLAYER_IS_READY: {
             const newState = {
                 ...oldState,
-                players: mapPlayers(replace(player, "ready", true)),
+                players: mapPlayers(replaceKey(player, "ready", true)),
             };
             if (newState.players.every((p) => p?.ready === true)) {
                 return upgradeToPassPhase(newState);

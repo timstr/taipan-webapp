@@ -79,7 +79,7 @@ export const mockPassPhaseState: GameStatePassPhase = {
     ],
 };
 
-export const mockPlayState: GameStatePlayPhase = {
+export const mockPlayPhaseState: GameStatePlayPhase = {
     phase: PlayPhase,
     currentTrick: EmptyDoubleStack,
     players: [

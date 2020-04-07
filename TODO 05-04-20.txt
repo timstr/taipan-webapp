@@ -1,28 +1,55 @@
 TODO:
 - put trick back (will require tricksWon to be Card[][][])
+- record who played what on current trick
+- show who played last hand
 - move play trick button below cards
+- run http (not s) server on port 80 that simply redirects all requests to https
 - new initial screen: spectate or join game (if seats are available)
 - play requires password
 - kick player if idle for 5 minutes
 - kick spectator if idle for 30 minutes?
-- show who played last hand
+
+- make pass card UI cleaner:
+    - get rid of all the buttons below each card
+    - just cards are shown initially, visually identical to play phase
+    - tap a card to bring up the same buttons right on top of the card (which becomes faded)
+        - pass left
+        - pass to partner
+        - pass right
+        - cancel
+    - hitting cancel (or the element losing focus?) makes the buttons go away again
+    - If a card has been chosen to be passed, it appears faded with a button superimposed on its middle saying "take back"
+
 - new server messages:
     - welcome: number of players/available spots, number of spectators, game in progress?
     - you're about to be kicked
     - you've been kicked
     - all spots are taken, you can't join
     - password correct/incorrect
+
 - new client messages:
     - join game
     - spectate
     - I'm still alive (to prevent being kicked)
+
 - spectator view
     - move client UI guts (except loading/disconnected) to PlayerUI
     - add SpectatorUI
     - add SpectatorStateView
     - replace ClientUI with join-or-spectate screen
     - when socket first connects, send welcome (see above)
+
 - notifications
     - vertical list of items that slowly vanished or can be dismissed
     - only stored in client ui state, generated from server messages
     - examples: 
+    
+- new phases:
+    - deal phase
+        - actions:
+            - take first deal
+            - take second deal (and automatically advance to pass phase?)
+    - review pass phase?
+        - each player is shown the cards they were passed
+        - actions
+            - ready to play

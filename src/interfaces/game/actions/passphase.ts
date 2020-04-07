@@ -1,4 +1,4 @@
-import { Card } from "../../cards";
+import { Card, cardBelongsTo, cardsAreEqual } from "../../cards";
 import { createAction } from "./createaction";
 import {
     expectObject,
@@ -10,10 +10,13 @@ import {
     PlayerIndex,
     GameState,
     GameStatePassPhase,
-    PlayerHandPassPhase,
     upgradeToPlayPhase,
 } from "../state";
 import { RelativePlayerPosition } from "../position";
+import {
+    mapGamePlayersFunction,
+    replacePlayerKeyFunction,
+} from "../updatehelpers";
 
 // sets ready to false, removes card from other choices
 export const CHOOSE_CARD_TO_PASS = "CHOOSE_CARD_TO_PASS";
@@ -55,79 +58,86 @@ export function validatePassPhaseAction(
     return a;
 }
 
-type PlayerMapFn = (
-    pp: PlayerHandPassPhase,
-    i: PlayerIndex
-) => PlayerHandPassPhase;
-
 export function updatePassPhase(
     oldState: GameStatePassPhase,
     player: PlayerIndex,
     action: PassPhaseAction
 ): GameState {
-    const mapPlayers = (
-        ...fns: PlayerMapFn[]
-    ): GameStatePassPhase["players"] => {
-        const f: PlayerMapFn = (pp, i) => {
-            for (let fn of fns) {
-                pp = fn(pp, i);
-            }
-            return pp;
-        };
-        const ps = oldState.players;
-        return [f(ps[0], 0), f(ps[1], 1), f(ps[2], 2), f(ps[3], 3)];
+    const mapPlayers = mapGamePlayersFunction(oldState);
+    const replaceKey = replacePlayerKeyFunction(oldState);
+
+    const yourHand = oldState.players[player];
+    const prevGive = yourHand.give;
+
+    const posToPassMapping = <const>{
+        Left: "leftOpponent",
+        Opposite: "partner",
+        Right: "rightOpponent",
     };
 
-    const replace = <K extends keyof PlayerHandPassPhase>(
-        idx: PlayerIndex,
-        key: K,
-        newValue: PlayerHandPassPhase[K]
-    ): PlayerMapFn => {
-        return (
-            pp: PlayerHandPassPhase,
-            i: PlayerIndex
-        ): PlayerHandPassPhase => {
-            if (i === idx) {
-                let ret = {
-                    ...pp,
-                };
-                ret[key] = newValue;
-                return ret;
-            }
-            return pp;
-        };
+    const alreadyPassing = (
+        card: Card,
+        where: RelativePlayerPosition
+    ): boolean => {
+        const passCard = prevGive[posToPassMapping[where]];
+        return passCard ? cardsAreEqual(card, passCard) : false;
     };
-
-    const prevGive = oldState.players[player].give;
-
-    // TODO: enforce passing cards that you own and passing them just once
-
     switch (action.type) {
         case CHOOSE_CARD_TO_PASS: {
-            const whichKey = (<const>{
-                Left: "leftOpponent",
-                Opposite: "partner",
-                Right: "rightOpponent",
-            })[action.payload.position];
+            const theCard = action.payload.card;
+            if (theCard && !cardBelongsTo(theCard, yourHand.inHand)) {
+                throw new Error(
+                    `Player ${player}, "${
+                        yourHand.profile.name
+                    }", tried to pass the card ${JSON.stringify(
+                        theCard
+                    )}, which they do not have`
+                );
+            }
+
+            const whichKey = posToPassMapping[action.payload.position];
             let newGive = { ...prevGive };
+            if (theCard) {
+                if (alreadyPassing(theCard, "Left")) {
+                    newGive.leftOpponent = null;
+                }
+                if (alreadyPassing(theCard, "Opposite")) {
+                    newGive.partner = null;
+                }
+                if (alreadyPassing(theCard, "Right")) {
+                    newGive.rightOpponent = null;
+                }
+            }
             newGive[whichKey] = action.payload.card;
             return {
                 ...oldState,
                 players: mapPlayers(
-                    replace(player, "give", newGive),
-                    replace(player, "ready", false)
+                    replaceKey(player, "give", newGive),
+                    replaceKey(player, "ready", false)
                 ),
             };
         }
-        case READY_TO_PASS:
-            // TODO: prevent ready until all cards are chosen
+        case READY_TO_PASS: {
+            if (
+                !(
+                    prevGive.leftOpponent &&
+                    prevGive.partner &&
+                    prevGive.rightOpponent
+                )
+            ) {
+                throw new Error(
+                    `Player ${player}, "${yourHand.profile.name}", claims to be ready to pass but doesn't have all cards ready`
+                );
+            }
+
             const newState = {
                 ...oldState,
-                players: mapPlayers(replace(player, "ready", true)),
+                players: mapPlayers(replaceKey(player, "ready", true)),
             };
-            if (newState.players.every(p => p.ready)) {
+            if (newState.players.every((p) => p.ready)) {
                 return upgradeToPlayPhase(newState);
             }
             return newState;
+        }
     }
 }

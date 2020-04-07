@@ -13,6 +13,7 @@ import {
     sortCards,
     EmptyDoubleStack,
     pushTripleStack,
+    popTripleStack,
 } from "../../cards";
 import { createAction } from "./createaction";
 import { expectObject, validateCard } from "../../parsehelpers";
@@ -25,6 +26,10 @@ import {
     upgradeToScorePhase,
 } from "../state";
 import { findPlayerWithPosition } from "../stateview";
+import {
+    mapGamePlayersFunction,
+    replacePlayerKeyFunction,
+} from "../updatehelpers";
 
 export const STAGE_CARD = "STAGE_CARD";
 export const stageCardAction = (card: Card) =>
@@ -60,7 +65,11 @@ export type ReclaimLastPlayAction = ReturnType<typeof reclaimLastPlayAction>;
 
 export const TAKE_TRICK = "TAKE_TRICK";
 export const takeTrickAction = () => createAction(PlayPhase, TAKE_TRICK);
-export type takeTrickAction = ReturnType<typeof takeTrickAction>;
+export type TakeTrickAction = ReturnType<typeof takeTrickAction>;
+
+export const PUT_TRICK_BACK = "PUT_TRICK_BACK";
+export const putTrickBackAction = () => createAction(PlayPhase, PUT_TRICK_BACK);
+export type PutTrickBackAction = ReturnType<typeof putTrickBackAction>;
 
 // TODO:
 // - pass
@@ -75,7 +84,8 @@ export type PlayPhaseAction =
     | PlaySingleCardAction
     | PlayStagedCardsAction
     | ReclaimLastPlayAction
-    | takeTrickAction;
+    | TakeTrickAction
+    | PutTrickBackAction;
 
 export function validatePlayPhaseAction(
     type: string,
@@ -98,6 +108,8 @@ export function validatePlayPhaseAction(
                 return reclaimLastPlayAction();
             case TAKE_TRICK:
                 return takeTrickAction();
+            case PUT_TRICK_BACK:
+                return putTrickBackAction();
         }
     })();
     if (a === undefined) {
@@ -105,11 +117,6 @@ export function validatePlayPhaseAction(
     }
     return a;
 }
-
-type PlayerMapFn = (
-    pp: PlayerHandPlayPhase,
-    i: PlayerIndex
-) => PlayerHandPlayPhase;
 
 const wentOut = (player: PlayerHandPlayPhase): boolean => {
     return countStack(player.inHand) === 0;
@@ -141,38 +148,8 @@ export function updatePlayPhase(
     player: PlayerIndex,
     action: PlayPhaseAction
 ): GameState {
-    const mapPlayers = (
-        ...fns: PlayerMapFn[]
-    ): GameStatePlayPhase["players"] => {
-        const f: PlayerMapFn = (pp, i) => {
-            for (let fn of fns) {
-                pp = fn(pp, i);
-            }
-            return pp;
-        };
-        const ps = oldState.players;
-        return [f(ps[0], 0), f(ps[1], 1), f(ps[2], 2), f(ps[3], 3)];
-    };
-
-    const replace = <K extends keyof PlayerHandPlayPhase>(
-        idx: PlayerIndex,
-        key: K,
-        newValue: PlayerHandPlayPhase[K]
-    ): PlayerMapFn => {
-        return (
-            pp: PlayerHandPlayPhase,
-            i: PlayerIndex
-        ): PlayerHandPlayPhase => {
-            if (i === idx) {
-                let ret = {
-                    ...pp,
-                };
-                ret[key] = newValue;
-                return ret;
-            }
-            return pp;
-        };
-    };
+    const mapPlayers = mapGamePlayersFunction(oldState);
+    const replaceKey = replacePlayerKeyFunction(oldState);
 
     const hand = oldState.players[player];
 
@@ -201,7 +178,7 @@ export function updatePlayPhase(
             return {
                 ...oldState,
                 players: mapPlayers(
-                    replace(
+                    replaceKey(
                         player,
                         "staged",
                         pushStack(hand.staged, action.payload.card)
@@ -223,7 +200,7 @@ export function updatePlayPhase(
             return {
                 ...oldState,
                 players: mapPlayers(
-                    replace(
+                    replaceKey(
                         player,
                         "staged",
                         filterCards(
@@ -237,7 +214,7 @@ export function updatePlayPhase(
         case CLEAR_STAGED_CARDS: {
             return {
                 ...oldState,
-                players: mapPlayers(replace(player, "staged", EmptyStack)),
+                players: mapPlayers(replaceKey(player, "staged", EmptyStack)),
             };
         }
         case PLAY_SINGLE_CARD: {
@@ -248,7 +225,7 @@ export function updatePlayPhase(
                     cards: [action.payload.card],
                 }),
                 players: mapPlayers(
-                    replace(
+                    replaceKey(
                         player,
                         "inHand",
                         filterCards(
@@ -271,12 +248,12 @@ export function updatePlayPhase(
                     hand.staged
                 ),
                 players: mapPlayers(
-                    replace(
+                    replaceKey(
                         player,
                         "inHand",
                         filterCards(hand.inHand, (c) => !cardIsStaged(c))
                     ),
-                    replace(player, "staged", EmptyStack)
+                    replaceKey(player, "staged", EmptyStack)
                 ),
             };
         }
@@ -287,12 +264,10 @@ export function updatePlayPhase(
             }
             const [newTrick, backToHand] = popDoubleStack(trick);
             const newHand = sortCards(concatStacks(hand.inHand, backToHand));
-            //const newTrick = trick.slice(0, trick.length - 1);
-            // const newHand = hand.inHand.concat(trick[trick.length - 1]).sort(compareCards);
             return {
                 ...oldState,
                 currentTrick: newTrick,
-                players: mapPlayers(replace(player, "inHand", newHand)),
+                players: mapPlayers(replaceKey(player, "inHand", newHand)),
             };
         }
         case TAKE_TRICK: {
@@ -300,7 +275,7 @@ export function updatePlayPhase(
                 ...oldState,
                 currentTrick: EmptyDoubleStack,
                 players: mapPlayers(
-                    replace(
+                    replaceKey(
                         player,
                         "tricksWon",
                         pushTripleStack(hand.tricksWon, oldState.currentTrick)
@@ -311,6 +286,23 @@ export function updatePlayPhase(
                 return upgradeToScorePhase(newState);
             }
             return newState;
+        }
+        case PUT_TRICK_BACK: {
+            if (countDoubleStack(oldState.currentTrick) > 0) {
+                throw new Error(
+                    `Player ${player}, "${hand.profile.name}", attempted to put trick back when current was not empty`
+                );
+            }
+            const [newTricksWon, newCurrentTrick] = popTripleStack(
+                hand.tricksWon
+            );
+            return {
+                ...oldState,
+                currentTrick: newCurrentTrick,
+                players: mapPlayers(
+                    replaceKey(player, "tricksWon", newTricksWon)
+                ),
+            };
         }
     }
 }

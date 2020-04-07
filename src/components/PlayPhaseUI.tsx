@@ -16,9 +16,10 @@ import { ActionProvider } from "./MessageContext";
 import {
     stageCardAction,
     playStagedCardsAction,
-    takeTrickAction,
     unstageCardAction,
     reclaimLastPlayAction,
+    takeTrickAction,
+    putTrickBackAction,
 } from "../interfaces/game/actions/playphase";
 import { Header } from "./Header";
 import { MainContent } from "./MainContent";
@@ -134,6 +135,16 @@ const PlayStagedButton = () => (
     </ActionProvider>
 );
 
+const PutTrickBackButton = () => (
+    <ActionProvider>
+        {(doAction) => (
+            <button onClick={() => doAction(putTrickBackAction())}>
+                Put Trick Back
+            </button>
+        )}
+    </ActionProvider>
+);
+
 interface Props {
     readonly gameState: GameStatePlayPhaseView;
 }
@@ -170,14 +181,14 @@ export const PlayPhaseUI = (props: Props) => {
             </div>
             <div className="staging-area">
                 <h3>Staging Area</h3>
-                {countStack(s.yourHand.staged) > 0 ? (
-                    <PlayStagedButton />
-                ) : null}
-                <div>
+                <div className="staging-area-cards">
                     {s.yourHand.staged.cards.map((c, i) => (
                         <StagedCard key={i} card={c} />
                     ))}
                 </div>
+                {countStack(s.yourHand.staged) > 0 ? (
+                    <PlayStagedButton />
+                ) : null}
             </div>
             <div className="your-hand-play-phase">
                 <h3>Your Hand</h3>
@@ -198,6 +209,10 @@ export const PlayPhaseUI = (props: Props) => {
                         type="Heap"
                         size="medium"
                     />
+                    {numCardsWon > 0 &&
+                    countDoubleStack(s.currentTrick) === 0 ? (
+                        <PutTrickBackButton />
+                    ) : null}
                 </div>
             </div>
         </MainContent>
