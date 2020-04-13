@@ -1,6 +1,9 @@
 import * as React from "react";
-import { ClientMessage, playerActionMessage } from "../messages";
-import { Action } from "../interfaces/game/actions";
+import { Action } from "../interfaces/game/actions/actions";
+import {
+    ClientMessage,
+    playerDidActionMessage,
+} from "../interfaces/messages/clientmessages";
 
 export type MessageContextType = (message: ClientMessage) => void;
 
@@ -12,16 +15,28 @@ export const MessageContext = React.createContext<MessageContextType>(
     DefaultMessageContextType
 );
 
-type ActionHandler = (action: Action) => void;
+type MessageHandler = (message: ClientMessage) => void;
 
-interface Props {
-    children: (onAction: ActionHandler) => React.ReactNode;
+interface MessageProviderProps {
+    readonly children: (sendMessage: MessageHandler) => React.ReactNode;
 }
 
-export const ActionProvider = (props: Props) => (
+export const WithMessage = (props: MessageProviderProps) => (
     <MessageContext.Consumer>
-        {handleMsg =>
-            props.children((a: Action) => handleMsg(playerActionMessage(a)))
+        {(handleMessage) => props.children(handleMessage)}
+    </MessageContext.Consumer>
+);
+
+type ActionHandler = (action: Action) => void;
+
+interface ActionProviderProps {
+    children: (doAction: ActionHandler) => React.ReactNode;
+}
+
+export const WithAction = (props: ActionProviderProps) => (
+    <MessageContext.Consumer>
+        {(handleMsg) =>
+            props.children((a: Action) => handleMsg(playerDidActionMessage(a)))
         }
     </MessageContext.Consumer>
 );

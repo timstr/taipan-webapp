@@ -34,7 +34,9 @@ if (mode === "development") {
     commonConfig.devtool = "source-map";
 }
 
-const serverConfig = {
+const nodeConfig = {
+    ...commonConfig,
+
     ...commonConfig,
 
     target: "node",
@@ -43,6 +45,10 @@ const serverConfig = {
         __dirname: false,
         __filename: false,
     },
+};
+
+const serverConfig = {
+    ...nodeConfig,
 
     entry: {
         main: "./main.ts",
@@ -51,6 +57,21 @@ const serverConfig = {
     output: {
         filename: "main.js",
         path: path.resolve(__dirname, "dist/server/"),
+    },
+
+    plugins: [new CleanWebpackPlugin()],
+};
+
+const hashPasswordConfig = {
+    ...nodeConfig,
+
+    entry: {
+        main: "./hashpassword.ts",
+    },
+
+    output: {
+        filename: "hashpassword.js",
+        path: path.resolve(__dirname, "dist/util/"),
     },
 
     plugins: [new CleanWebpackPlugin()],
@@ -87,6 +108,10 @@ const clientConfig = {
                 to: "static",
             },
             {
+                from: "../favicon.ico",
+                to: "favicon.ico",
+            },
+            {
                 from: `../index_${mode === "production" ? "dist" : "dev"}.html`,
                 to: "index.html",
             },
@@ -94,4 +119,4 @@ const clientConfig = {
     ],
 };
 
-module.exports = [serverConfig, clientConfig];
+module.exports = [serverConfig, hashPasswordConfig, clientConfig];

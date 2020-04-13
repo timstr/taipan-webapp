@@ -1,7 +1,7 @@
-import { GameState, DefaultGameState } from "./state";
-import { updateGameState } from "./update";
-import { Emitter } from "../Emitter";
-import { PlayerAction } from "./actions";
+import { GameState, DefaultGameState } from "./state/state";
+import { updateGameState } from "./update/update";
+import { Emitter } from "../emitter";
+import { PlayerAction } from "./actions/actions";
 
 export type GameStateHandler = (state: GameState) => void;
 
@@ -12,8 +12,6 @@ export class Game {
     }
 
     getGameState(): GameState {
-        // TODO: hmmm
-        // return clone(this.state);
         return this.state;
     }
 
@@ -23,7 +21,14 @@ export class Game {
     }
 
     update(action: PlayerAction) {
-        this.state = updateGameState(this.state, action);
+        try {
+            this.state = updateGameState(this.state, action);
+        } catch (e) {
+            console.error(
+                "An error occurred while updating the game state:",
+                e
+            );
+        }
         this.updateEmitter.emit(this.state);
     }
 

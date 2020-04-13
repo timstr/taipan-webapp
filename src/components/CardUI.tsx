@@ -25,6 +25,8 @@ function getCardFileName(card: FlippableCard): string {
 
     if (card === "Backside") {
         return root + "back.png";
+    } else if (card === "Mah Jong") {
+        return root + "mahjong.png";
     } else if (typeof card === "string") {
         return root + card.toLowerCase() + ".png";
     } else {

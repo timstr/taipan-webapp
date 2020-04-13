@@ -1,3 +1,5 @@
+import { clone } from "./clone";
+
 export type CardSuite = "Red" | "Green" | "Blue" | "Black";
 export const AllCardSuites: CardSuite[] = ["Red", "Green", "Blue", "Black"];
 
@@ -31,12 +33,22 @@ export const AllNormalCards: ReadonlyArray<NormalCard> = AllCardSuites.reduce(
     [] as ReadonlyArray<NormalCard>
 );
 
-export type SpecialCard = "Majong" | "Dog" | "Pheonix" | "Dragon";
+export const MahJongCard = "Mah Jong";
+export const DogCard = "Dog";
+export const PhoenixCard = "Phoenix";
+export const DragonCard = "Dragon";
+
+export type MahJongCard = typeof MahJongCard;
+export type DogCard = typeof DogCard;
+export type PhoenixCard = typeof PhoenixCard;
+export type DragonCard = typeof DragonCard;
+
+export type SpecialCard = MahJongCard | DogCard | PhoenixCard | DragonCard;
 export const AllSpecialCards: ReadonlyArray<SpecialCard> = [
-    "Majong",
-    "Dog",
-    "Pheonix",
-    "Dragon",
+    MahJongCard,
+    DogCard,
+    PhoenixCard,
+    DragonCard,
 ];
 
 export type Card = NormalCard | SpecialCard;
@@ -84,10 +96,15 @@ export const compareCards = (a: Card, b: Card): number => {
     const cmp = <T>(t1: T, t2: T): number => (t1 < t2 ? 1 : t1 > t2 ? -1 : 0);
     if (typeof a === "string") {
         if (typeof b === "string") {
-            const lut: SpecialCard[] = ["Majong", "Dog", "Pheonix", "Dragon"];
+            const lut: SpecialCard[] = [
+                MahJongCard,
+                DogCard,
+                PhoenixCard,
+                DragonCard,
+            ];
             return lut.indexOf(a) - lut.indexOf(b);
         } else {
-            return a === "Dog" || a === "Majong" ? -1 : 1;
+            return a === DogCard || a === MahJongCard ? -1 : 1;
         }
     } else {
         if (typeof b === "object") {
@@ -98,13 +115,13 @@ export const compareCards = (a: Card, b: Card): number => {
             }
             return cmp(a.suite, b.suite);
         } else {
-            return b === "Dog" || b === "Majong" ? 1 : -1;
+            return b === DogCard || b === MahJongCard ? 1 : -1;
         }
     }
 };
 
 export const sortCards = (stack: CardStack): CardStack => {
-    const cloned = JSON.parse(JSON.stringify(stack.cards)) as Card[];
+    const cloned = clone(stack.cards);
     return { cards: cloned.sort(compareCards) };
 };
 
@@ -155,7 +172,7 @@ export const popTripleStack = (
         throw new Error("Attempted to pop empty stack");
     }
     return [
-        { stackStacks: stackStackStack.stackStacks.slice(n - 1) },
+        { stackStacks: stackStackStack.stackStacks.slice(0, n - 1) },
         stackStackStack.stackStacks[n - 1],
     ];
 };
@@ -174,22 +191,24 @@ export const filterCards = (
     cards: stack.cards.filter(predicate),
 });
 
-export const randomShuffle = (cards: CardStack): CardStack => {
-    if (!validateDeck(cards)) {
-        throw new Error(`Invalid deck: ${JSON.stringify(cards)}`);
-    }
-    let array = JSON.parse(JSON.stringify(cards));
+export const randomShuffle = (stack: CardStack): CardStack => {
+    let array = clone(stack.cards);
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
     }
-    let stack: CardStack = {
+    let shuffledStack: CardStack = {
         cards: array,
     };
-    if (!validateDeck(stack)) {
-        throw new Error(`Invalid shuffle: ${JSON.stringify(stack)}`);
+    if (
+        !(
+            allCardsBelongsTo(shuffledStack, stack) &&
+            allCardsBelongsTo(stack, shuffledStack)
+        )
+    ) {
+        throw new Error("Invalid shuffle");
     }
-    return stack;
+    return shuffledStack;
 };
 
 export const cardBelongsTo = (card: Card, stack: CardStack): boolean => {
@@ -244,22 +263,36 @@ export const anyDuplicateCards = (stack: CardStack) => {
     return false;
 };
 
-export const validateDeck = (stack: CardStack): boolean => {
+export const deckIsValid = (stack: CardStack): boolean => {
     if (countStack(stack) !== DeckSize) {
+        console.warn(
+            `Deck with wrong number of cards encountered. Expected ${DeckSize}, got ${countStack(
+                stack
+            )}`
+        );
         return false;
     }
 
-    return !anyDuplicateCards(stack);
+    if (anyDuplicateCards(stack)) {
+        console.warn(
+            `Deck with duplicate cards encountered: ${JSON.stringify(stack)}`
+        );
+        return false;
+    }
+
+    return true;
 };
 
-export const dealCards = (
-    stack: CardStack
-): [CardStack, CardStack, CardStack, CardStack] => {
-    const shuffled = randomShuffle(stack).cards;
+export const dealCards = (): [CardStack, CardStack, CardStack, CardStack] => {
+    const shuffled = randomShuffle(AllCards);
+    if (!deckIsValid(shuffled)) {
+        throw new Error("Deck was invalidated during shuffle");
+    }
+    const cards = shuffled.cards;
     return [
-        { cards: shuffled.slice(0, 14) },
-        { cards: shuffled.slice(14, 28) },
-        { cards: shuffled.slice(28, 42) },
-        { cards: shuffled.slice(42, 56) },
+        { cards: cards.slice(0, 14) },
+        { cards: cards.slice(14, 28) },
+        { cards: cards.slice(28, 42) },
+        { cards: cards.slice(42, 56) },
     ];
 };

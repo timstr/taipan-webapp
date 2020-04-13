@@ -2,17 +2,32 @@ import { SocketClient } from "./socketclient";
 import {
     GameStateView,
     DefaultGameStateView,
-} from "./interfaces/game/stateview";
-import { Emitter } from "./interfaces/Emitter";
+} from "./interfaces/game/view/stateview";
+import { Emitter } from "./interfaces/emitter";
 import {
-    parseServerMessage,
-    UpdatedState,
     ClientMessage,
     serializeClientMessage,
+} from "./interfaces/messages/clientmessages";
+import {
     ServerMessage,
-} from "./messages";
+    UPDATED_PLAYER_STATE,
+    CLIENT_WILL_BE_KICKED_SOON,
+    CLIENT_WAS_KICKED,
+    CLIENT_JOINED_GAME,
+    CLIENT_FAILED_TO_JOIN_GAME,
+    UPDATED_SPECTATOR_STATE,
+    JoinFailureReason,
+} from "./interfaces/messages/servermessages";
+import { parseServerMessage } from "./interfaces/parse/messages";
+import { GameStateSpectatorView } from "./interfaces/game/view/spectatorview";
 
-export type GameStateViewChangedHandler = (newState: GameStateView) => void;
+export type ViewOfGame = GameStateView | GameStateSpectatorView;
+
+export type ViewOfGameChangedHandler = (newState: ViewOfGame) => void;
+
+export type JoinedGameHandler = (gameState: GameStateView) => void;
+
+export type CouldntJoinGameHandler = (reason: JoinFailureReason) => void;
 
 export class GameClient {
     constructor(host: string) {
@@ -21,6 +36,10 @@ export class GameClient {
         this.gameStateViewChanged = new Emitter();
         this.onConnect = new Emitter();
         this.onDisconnect = new Emitter();
+        this.onKickWarning = new Emitter();
+        this.onKick = new Emitter();
+        this.onJoinedGame = new Emitter();
+        this.onCouldntJoinGame = new Emitter();
 
         this.socket.open.addListener(this.socketOpenedHandler);
         this.socket.closed.addListener(this.socketClosedHandler);
@@ -30,11 +49,15 @@ export class GameClient {
         this.state = DefaultGameStateView;
     }
 
-    gameStateViewChanged: Emitter<Parameters<GameStateViewChangedHandler>>;
+    gameStateViewChanged: Emitter<Parameters<ViewOfGameChangedHandler>>;
     onConnect: Emitter;
     onDisconnect: Emitter;
+    onKickWarning: Emitter;
+    onKick: Emitter;
+    onJoinedGame: Emitter<Parameters<JoinedGameHandler>>;
+    onCouldntJoinGame: Emitter<Parameters<CouldntJoinGameHandler>>;
 
-    getState(): GameStateView {
+    getState(): ViewOfGame {
         return this.state;
     }
 
@@ -44,7 +67,7 @@ export class GameClient {
 
     private socket: SocketClient;
 
-    private state: GameStateView;
+    private state: ViewOfGame;
 
     private socketOpenedHandler = () => {
         this.onConnect.emit();
@@ -64,18 +87,37 @@ export class GameClient {
             console.error("Ill-formed message from server:", x);
             return;
         } else {
-            const success = ((): boolean => {
-                switch (msg.type as ServerMessage["type"]) {
-                    case UpdatedState: {
-                        this.state = msg.payload;
-                        this.gameStateViewChanged.emit(this.state);
-                        return true;
-                    }
-                }
-            })();
-            if (success === undefined) {
-                console.error("Unrecognized server message type:", msg.type);
+            const success = this.handleServerMessage(msg);
+            if (success !== true) {
+                console.error("Improperly handled server message type:", msg);
             }
         }
     };
+
+    private handleServerMessage(msg: ServerMessage): boolean {
+        switch (msg.type) {
+            case CLIENT_WILL_BE_KICKED_SOON:
+                this.onKickWarning.emit();
+                return true;
+            case CLIENT_WAS_KICKED:
+                this.onKick.emit();
+                return true;
+            case CLIENT_JOINED_GAME:
+                this.onJoinedGame.emit(msg.payload.gameState);
+                return true;
+            case CLIENT_FAILED_TO_JOIN_GAME:
+                this.onCouldntJoinGame.emit(msg.payload.reason);
+                return true;
+            case UPDATED_PLAYER_STATE: {
+                this.state = msg.payload.newState;
+                this.gameStateViewChanged.emit(this.state);
+                return true;
+            }
+            case UPDATED_SPECTATOR_STATE: {
+                this.state = msg.payload.newState;
+                this.gameStateViewChanged.emit(this.state);
+                return true;
+            }
+        }
+    }
 }

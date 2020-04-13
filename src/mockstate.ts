@@ -1,30 +1,33 @@
 import {
     dealCards,
-    AllCards,
     EmptyTripleStack,
     EmptyStack,
     sortCards,
     EmptyDoubleStack,
 } from "./interfaces/cards";
 import {
-    PlayerIndex,
-    PlayerHandPlayPhase,
-    GameStatePlayPhase,
-    PlayPhase,
-    PlayerProfile,
-    GameStateJoinPhase,
-    GameStatePassPhase,
-    GameStateScorePhase,
-    JoinPhase,
+    PlayPhaseState,
+    PlayPhaseTag,
+    JoinPhaseState,
+    PassPhaseState,
+    ScorePhaseState,
+    JoinPhaseTag,
+    PassPhaseTag,
+    ScorePhaseTag,
+    DealPhaseState,
+    DealPhaseTag,
+} from "./interfaces/game/state/state";
+import { PlayerPosition } from "./interfaces/game/player/position";
+import {
     PendingPlayer,
-    PassPhase,
-    PlayerHandPassPhase,
-    PlayerHandScorePhase,
-    ScorePhase,
-} from "./interfaces/game/state";
-import { PlayerPosition } from "./interfaces/game/position";
+    PassPhasePlayer,
+    PlayPhasePlayer,
+    ScorePhasePlayer,
+    DealPhasePlayer,
+} from "./interfaces/game/playerstate";
+import { PlayerProfile, PlayerIndex } from "./interfaces/game/player/player";
 
-const cardsDealt = dealCards(AllCards);
+const cardsDealt = dealCards();
 
 const makePlayerProfile = (i: PlayerIndex): PlayerProfile => ({
     name: ["Alphonzo", "Braden", "Charlie", "Dennis"][i],
@@ -36,7 +39,14 @@ const makePlayerJoinPhase = (i: PlayerIndex): PendingPlayer => ({
     ready: false,
 });
 
-const makePlayerPassPhase = (i: PlayerIndex): PlayerHandPassPhase => ({
+const makePlayerDealPhase = (i: PlayerIndex): DealPhasePlayer => ({
+    profile: makePlayerProfile(i),
+    firstDeal: { cards: cardsDealt[i].cards.slice(0, 8) },
+    secondDeal: { cards: cardsDealt[i].cards.slice(8, 14) },
+    tookSecondDeal: false,
+});
+
+const makePlayerPassPhase = (i: PlayerIndex): PassPhasePlayer => ({
     profile: makePlayerProfile(i),
     inHand: cardsDealt[i],
     give: {
@@ -47,20 +57,20 @@ const makePlayerPassPhase = (i: PlayerIndex): PlayerHandPassPhase => ({
     ready: false,
 });
 
-const makePlayerPlayPhase = (i: PlayerIndex): PlayerHandPlayPhase => ({
+const makePlayerPlayPhase = (i: PlayerIndex): PlayPhasePlayer => ({
     profile: makePlayerProfile(i),
     inHand: sortCards(cardsDealt[i]),
     tricksWon: EmptyTripleStack,
     staged: EmptyStack,
 });
-const makePlayerScorePhase = (i: PlayerIndex): PlayerHandScorePhase => ({
+const makePlayerScorePhase = (i: PlayerIndex): ScorePhasePlayer => ({
     profile: makePlayerProfile(i),
     cards: cardsDealt[i],
     readyToPlayAgain: false,
 });
 
-export const mockJoinPhaseState: GameStateJoinPhase = {
-    phase: JoinPhase,
+export const mockJoinPhaseState: JoinPhaseState = {
+    phase: JoinPhaseTag,
     players: [
         makePlayerJoinPhase(0),
         makePlayerJoinPhase(1),
@@ -69,8 +79,18 @@ export const mockJoinPhaseState: GameStateJoinPhase = {
     ],
 };
 
-export const mockPassPhaseState: GameStatePassPhase = {
-    phase: PassPhase,
+export const mockDealPhaseState: DealPhaseState = {
+    phase: DealPhaseTag,
+    players: [
+        makePlayerDealPhase(0),
+        makePlayerDealPhase(1),
+        makePlayerDealPhase(2),
+        makePlayerDealPhase(3),
+    ],
+};
+
+export const mockPassPhaseState: PassPhaseState = {
+    phase: PassPhaseTag,
     players: [
         makePlayerPassPhase(0),
         makePlayerPassPhase(1),
@@ -79,8 +99,8 @@ export const mockPassPhaseState: GameStatePassPhase = {
     ],
 };
 
-export const mockPlayPhaseState: GameStatePlayPhase = {
-    phase: PlayPhase,
+export const mockPlayPhaseState: PlayPhaseState = {
+    phase: PlayPhaseTag,
     currentTrick: EmptyDoubleStack,
     players: [
         makePlayerPlayPhase(0),
@@ -90,8 +110,8 @@ export const mockPlayPhaseState: GameStatePlayPhase = {
     ],
 };
 
-export const mockScorePhaseState: GameStateScorePhase = {
-    phase: ScorePhase,
+export const mockScorePhaseState: ScorePhaseState = {
+    phase: ScorePhaseTag,
     players: [
         makePlayerScorePhase(0),
         makePlayerScorePhase(1),

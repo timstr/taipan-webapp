@@ -53,3 +53,5 @@ TODO:
         - each player is shown the cards they were passed
         - actions
             - ready to play
+
+- let players decide (via vote-to-consensus during join phase) whether to play with all Tai Pan cards or without special cards (this will allow many normal card games)

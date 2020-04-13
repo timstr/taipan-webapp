@@ -5,32 +5,29 @@ import {
     playerJoinedAction,
     playerLeftAction,
 } from "./interfaces/game/actions/joinphase";
-import {
-    PlayerIndex,
-    GameState,
-    AllPlayerIndices,
-} from "./interfaces/game/state";
-import { viewGameState } from "./interfaces/game/stateview";
-import {
-    ServerMessage,
-    updatedStateMessage,
-    ClientMessage,
-    PlayerAction,
-} from "./messages";
 import { playerAction } from "./interfaces/game/actions/createaction";
+import {
+    ClientMessage,
+    PLAYER_DID_ACTION,
+} from "./interfaces/messages/clientmessages";
+import { PlayerIndex } from "./interfaces/game/player/player";
 
 export class GameServer {
     constructor(httpServer: https.Server) {
-        this.socketServer = new SocketServer(httpServer);
+        this.socketServer = new SocketServer(httpServer, () =>
+            this.getGame().getGameState()
+        );
         this.game = new Game();
 
-        this.socketServer.onPlayerJoined(this.handlePlayerJoined);
+        this.socketServer.playerJoined.addListener(this.onPlayerJoined);
 
-        this.socketServer.onPlayerLeft(this.handlePlayerLeft);
+        this.socketServer.playerLeft.addListener(this.onPlayerLeft);
 
-        this.socketServer.onPlayerSentMessage(this.handlePlayerSentMessage);
+        this.socketServer.playerSentMessage.addListener(
+            this.onPlayerSentMessage
+        );
 
-        this.game.onUpdate(this.handleGameUpdate);
+        this.game.onUpdate((st) => this.socketServer.broadcastUpdatedState(st));
     }
 
     getGame(): Game {
@@ -44,52 +41,20 @@ export class GameServer {
     private socketServer: SocketServer;
     private game: Game;
 
-    private handlePlayerJoined = (idx: PlayerIndex) => {
+    private onPlayerJoined = (idx: PlayerIndex) => {
         this.game.update(playerAction(idx, playerJoinedAction()));
     };
 
-    private handlePlayerLeft = (idx: PlayerIndex) => {
+    private onPlayerLeft = (idx: PlayerIndex) => {
         this.game.update(playerAction(idx, playerLeftAction()));
     };
 
-    private handlePlayerSentMessage = (
+    private onPlayerSentMessage = (
         idx: PlayerIndex,
         message: ClientMessage
     ) => {
-        try {
-            const success = ((): boolean => {
-                switch (message.type as ClientMessage["type"]) {
-                    case PlayerAction: {
-                        this.game.update(playerAction(idx, message.payload));
-                        return true;
-                    }
-                }
-            })();
-            if (success === undefined) {
-                console.error(
-                    `Unknown message type from player ${idx}: "${
-                        message.type
-                    }", encountered in message "${JSON.stringify(message)}"`
-                );
-            }
-        } catch (e) {
-            console.error(`Error while handling client message: ${e}`);
+        if (message.type === PLAYER_DID_ACTION) {
+            this.game.update(playerAction(idx, message.payload.action));
         }
     };
-
-    private handleGameUpdate = (newstate: GameState) => {
-        for (let i of AllPlayerIndices) {
-            if (!this.socketServer.isPlayerConnected(i)) {
-                continue;
-            }
-            this.sendMessageTo(
-                i,
-                updatedStateMessage(viewGameState(newstate, i))
-            );
-        }
-    };
-
-    private sendMessageTo(player: PlayerIndex, message: ServerMessage) {
-        this.socketServer.sendPlayerMessage(player, message);
-    }
 }

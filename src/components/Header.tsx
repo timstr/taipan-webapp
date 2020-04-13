@@ -1,6 +1,13 @@
 import * as React from "react";
-import { GamePhase } from "../interfaces/game/state";
-import { PlayerPosition } from "../interfaces/game/position";
+import {
+    GamePhase,
+    JoinPhaseTag,
+    PassPhaseTag,
+    PlayPhaseTag,
+    ScorePhaseTag,
+    DealPhaseTag,
+} from "../interfaces/game/state/state";
+import { PlayerPosition } from "../interfaces/game/player/position";
 
 interface HeaderProps {
     readonly phase: GamePhase;
@@ -10,13 +17,15 @@ interface HeaderProps {
 
 const prettyPhaseName = (phase: GamePhase): string => {
     switch (phase) {
-        case "Join":
+        case JoinPhaseTag:
             return "Join The Game";
-        case "Pass":
+        case DealPhaseTag:
+            return "Take Your Cards";
+        case PassPhaseTag:
             return "Pass Cards";
-        case "Play":
+        case PlayPhaseTag:
             return "Play";
-        case "Score":
+        case ScorePhaseTag:
             return "The Tai Pan gods have spoken.";
     }
 };

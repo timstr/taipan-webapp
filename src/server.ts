@@ -4,32 +4,22 @@ import * as https from "https";
 import * as url from "url";
 import * as node_static from "node-static";
 import { Game } from "./interfaces/game/game";
-import { Emitter } from "./interfaces/Emitter";
+import { Emitter } from "./interfaces/emitter";
 import * as fs from "fs";
+import { getEnvironmentVariable } from "./env";
 
 const HTTPS_PORT = 443;
 const HTTP_REDIRECT_PORT = 80;
 
 export class Server {
     constructor() {
-        const getEnv = (name: string): string => {
-            const val = process.env[name];
-            if (typeof val !== "string") {
-                console.error(`Please set the "${name}" environment variable`);
-                throw new Error(`Missing environment variable "${name}"`);
-            }
-            return val;
-        };
-
-        const publicRoot = getEnv("PUBLIC_ROOT");
-
-        const keyPath = getEnv("SECRET_KEY_PATH");
-        const certPath = getEnv("SECRET_CERT_PATH");
+        const publicRoot = getEnvironmentVariable("PUBLIC_ROOT", true);
+        const keyPath = getEnvironmentVariable("SECRET_KEY_PATH", true);
+        const certPath = getEnvironmentVariable("SECRET_CERT_PATH", true);
 
         const options: https.ServerOptions = {
             key: fs.readFileSync(keyPath),
             cert: fs.readFileSync(certPath),
-            // TODO: consider using passphrase so friends need to know password
         };
 
         const file = new node_static.Server(publicRoot);
@@ -70,8 +60,6 @@ export class Server {
 
         this.onClose = new Emitter();
     }
-
-    // TODO: event listeners for http and game servers
 
     close() {
         console.log("Closing HTTP server");

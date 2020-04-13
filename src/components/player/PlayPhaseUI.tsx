@@ -1,18 +1,14 @@
 import * as React from "react";
-import {
-    GameStatePlayPhaseView,
-    PlayerHandPlayPhaseView,
-} from "../interfaces/game/stateview";
-import { CardUI, PileOfCards, RowsOfCards } from "./CardUI";
-import { RelativePlayerPosition } from "../interfaces/game/position";
+import { PlayPhaseView } from "../../interfaces/game/view/stateview";
+import { CardUI, PileOfCards, RowsOfCards } from "../CardUI";
 import {
     Card,
     cardBelongsTo,
     countTripleStack,
     countDoubleStack,
     countStack,
-} from "../interfaces/cards";
-import { ActionProvider } from "./MessageContext";
+} from "../../interfaces/cards";
+import { WithAction } from "../MessageContext";
 import {
     stageCardAction,
     playStagedCardsAction,
@@ -20,49 +16,17 @@ import {
     reclaimLastPlayAction,
     takeTrickAction,
     putTrickBackAction,
-} from "../interfaces/game/actions/playphase";
-import { Header } from "./Header";
-import { MainContent } from "./MainContent";
-
-interface OtherPlayerProps {
-    readonly position: RelativePlayerPosition;
-    readonly player: PlayerHandPlayPhaseView;
-}
-
-const OtherPlayerUI = (props: OtherPlayerProps) => {
-    const playerTitle =
-        props.position === "Opposite"
-            ? "Partner"
-            : props.position + " Opponent";
-    const inHand = props.player.cardsInHand - props.player.cardsStaged;
-    const staged = props.player.cardsStaged;
-    return (
-        <div className="other-player-play-phase">
-            <h3>{props.player.profile.name}</h3>
-            <h4>
-                <em>{playerTitle}</em>
-            </h4>
-            <hr />
-            <h5>Tricks Won</h5>
-            <PileOfCards
-                cards={props.player.cardsWon}
-                type="Heap"
-                size="small"
-            />
-            <h4>Hand</h4>
-            <PileOfCards cards={inHand} type="Overlapping" size="small" />
-            <h4>Staged</h4>
-            <PileOfCards cards={staged} type="SideBySide" size="small" />
-        </div>
-    );
-};
+} from "../../interfaces/game/actions/playphase";
+import { Header } from "../Header";
+import { MainContent } from "../MainContent";
+import { OtherPlayerPlayingUI } from "../../OtherPlayerPlayingUI";
 
 interface CardProps {
     readonly card: Card;
 }
 
 const StagedCard = (props: CardProps) => (
-    <ActionProvider>
+    <WithAction>
         {(doAction) => (
             <div className="staged-card-play-phase">
                 <CardUI
@@ -73,7 +37,7 @@ const StagedCard = (props: CardProps) => (
                 <br />
             </div>
         )}
-    </ActionProvider>
+    </WithAction>
 );
 
 interface CardInHandProps {
@@ -82,7 +46,7 @@ interface CardInHandProps {
 }
 
 const CardInHand = (props: CardInHandProps) => (
-    <ActionProvider>
+    <WithAction>
         {(doAction) => (
             <div
                 className="card-in-your-hand-play-phase"
@@ -102,67 +66,79 @@ const CardInHand = (props: CardInHandProps) => (
                 <br />
             </div>
         )}
-    </ActionProvider>
+    </WithAction>
 );
 
 const TakeTrickButton = () => (
-    <ActionProvider>
+    <WithAction>
         {(doAction) => (
             <button onClick={() => doAction(takeTrickAction())}>
                 Take Trick
             </button>
         )}
-    </ActionProvider>
+    </WithAction>
 );
 
 const ReclaimLastPlayButton = () => (
-    <ActionProvider>
+    <WithAction>
         {(doAction) => (
             <button onClick={() => doAction(reclaimLastPlayAction())}>
                 Reclaim Last Play
             </button>
         )}
-    </ActionProvider>
+    </WithAction>
 );
 
 const PlayStagedButton = () => (
-    <ActionProvider>
+    <WithAction>
         {(doAction) => (
             <button onClick={() => doAction(playStagedCardsAction())}>
                 Play Staged Cards
             </button>
         )}
-    </ActionProvider>
+    </WithAction>
 );
 
 const PutTrickBackButton = () => (
-    <ActionProvider>
+    <WithAction>
         {(doAction) => (
             <button onClick={() => doAction(putTrickBackAction())}>
                 Put Trick Back
             </button>
         )}
-    </ActionProvider>
+    </WithAction>
 );
 
 interface Props {
-    readonly gameState: GameStatePlayPhaseView;
+    readonly gameState: PlayPhaseView;
 }
 
 export const PlayPhaseUI = (props: Props) => {
     const s = props.gameState;
-    const numCardsWon = countTripleStack(s.yourHand.tricksWon);
+    const numCardsWon = countTripleStack(s.you.tricksWon);
     return (
         <MainContent backdrop="floor">
             <Header
-                name={s.yourHand.profile.name}
+                name={s.you.profile.name}
                 phase={s.phase}
-                position={s.yourHand.profile.position}
+                position={s.you.profile.position}
             />
             <div className="other-hands-play-phase">
-                <OtherPlayerUI position="Left" player={s.leftOpponent} />
-                <OtherPlayerUI position="Opposite" player={s.partner} />
-                <OtherPlayerUI position="Right" player={s.rightOpponent} />
+                <OtherPlayerPlayingUI
+                    positionTitle="Left Opponent"
+                    player={s.others.leftOpponent}
+                    facing="Down"
+                />
+                <OtherPlayerPlayingUI
+                    positionTitle="Partner"
+                    player={s.others.partner}
+                    facing="Down"
+                />
+                <OtherPlayerPlayingUI
+                    positionTitle="Right Opponent"
+                    player={s.others.rightOpponent}
+                    facing="Down"
+                />
             </div>
             <div className="current-trick">
                 <h3>Current Trick</h3>
@@ -182,22 +158,20 @@ export const PlayPhaseUI = (props: Props) => {
             <div className="staging-area">
                 <h3>Staging Area</h3>
                 <div className="staging-area-cards">
-                    {s.yourHand.staged.cards.map((c, i) => (
+                    {s.you.staged.cards.map((c, i) => (
                         <StagedCard key={i} card={c} />
                     ))}
                 </div>
-                {countStack(s.yourHand.staged) > 0 ? (
-                    <PlayStagedButton />
-                ) : null}
+                {countStack(s.you.staged) > 0 ? <PlayStagedButton /> : null}
             </div>
             <div className="your-hand-play-phase">
                 <h3>Your Hand</h3>
                 <div className="your-cards-play-phase">
-                    {s.yourHand.inHand.cards.map((c, i) => (
+                    {s.you.inHand.cards.map((c, i) => (
                         <div key={i} className="card-in-hand-play-phase-inner">
                             <CardInHand
                                 card={c}
-                                isStaged={cardBelongsTo(c, s.yourHand.staged)}
+                                isStaged={cardBelongsTo(c, s.you.staged)}
                             />
                         </div>
                     ))}

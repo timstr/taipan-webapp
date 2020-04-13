@@ -1,4 +1,4 @@
-import { Emitter } from "./interfaces/Emitter";
+import { Emitter } from "./interfaces/emitter";
 
 export type SocketOpenHandler = () => void;
 export type SocketClosedHandler = () => void;

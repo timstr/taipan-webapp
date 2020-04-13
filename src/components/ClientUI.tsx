@@ -2,25 +2,51 @@ import * as React from "react";
 import {
     GameStateView,
     DefaultGameStateView,
-} from "../interfaces/game/stateview";
+    PlayerViewTag,
+} from "../interfaces/game/view/stateview";
 import { GameClient } from "../gameclient";
-import { JoinPhaseUI } from "./JoinPhaseUI";
-import { PhassPhaseUI as PassPhaseUI } from "./PassPhaseUI";
-import { PlayPhaseUI } from "./PlayPhaseUI";
 import { MessageContext } from "./MessageContext";
-import { ClientMessage } from "../messages";
-import { ScorePhaseUI } from "./ScorePhaseUI";
 import { MainContent } from "./MainContent";
+import { ClientMessage } from "../interfaces/messages/clientmessages";
+import {
+    GameStateSpectatorView,
+    SpectatorViewTag,
+} from "../interfaces/game/view/spectatorview";
+import { PlayerUI } from "./player/PlayerUI";
+import { SpectatorUI } from "./spectator/SpectatorUI";
+import {
+    JoinFailureReason,
+    JoinFailedBecauseFull,
+    JoinFailedBecauseWrongPassword,
+    JoinFailedBecauseBanned,
+} from "../interfaces/messages/servermessages";
+import { EnterPasswordUI } from "./modal/EnterPasswordUI";
+import { WrongPasswordUI } from "./modal/WrongPasswordUI";
+import { GameIsFullUI } from "./modal/GameIsFullUI";
+import { KickWarningUI } from "./modal/KickWarningUI";
+import { YouWereKickedUI } from "./modal/YouWereKickedUI";
+import { YouAreBannedUI } from "./modal/YouAreBannedUI";
 
 const HOSTNAME = `wss://${window.location.host}`;
 
 interface Props {}
 
+type ModalUIState =
+    | "EnterPassword"
+    | "WrongPassword"
+    | "KickWarning"
+    | "YouWereKicked"
+    | "YouAreBanned"
+    | "GameIsFull";
+
 type ConnectionStatus = "Loading" | "Connected" | "Disconnected";
 
+type ViewOfGame = GameStateView | GameStateSpectatorView;
+
 interface State {
-    readonly gameState: GameStateView;
+    readonly gameState: ViewOfGame;
     readonly connection: ConnectionStatus;
+    readonly modalState: ModalUIState | null;
 }
 
 export class ClientUI extends React.Component<Props, State> {
@@ -30,12 +56,17 @@ export class ClientUI extends React.Component<Props, State> {
         this.state = {
             gameState: DefaultGameStateView,
             connection: "Loading",
+            modalState: null,
         };
 
         this.client = new GameClient(HOSTNAME);
 
         this.client.onConnect.addListener(this.onConnectHandler);
         this.client.onDisconnect.addListener(this.onDisconnectHandler);
+        this.client.onJoinedGame.addListener(this.onJoinedGameHandler);
+        this.client.onCouldntJoinGame.addListener(this.onJoinFailedHandler);
+        this.client.onKickWarning.addListener(this.onKickWarningHandler);
+        this.client.onKick.addListener(this.onKickHandler);
     }
 
     componentDidMount() {
@@ -48,7 +79,7 @@ export class ClientUI extends React.Component<Props, State> {
 
     private client: GameClient;
 
-    private onUpdateState = (newState: GameStateView) => {
+    private onUpdateState = (newState: ViewOfGame) => {
         this.setState({ gameState: newState });
     };
 
@@ -56,15 +87,66 @@ export class ClientUI extends React.Component<Props, State> {
         this.client.sendMessage(message);
     };
 
+    private onJoinedGameHandler = (newState: ViewOfGame) => {
+        this.hideModalUI();
+        this.onUpdateState(newState);
+    };
+
+    private onJoinFailedHandler = (reason: JoinFailureReason) => {
+        switch (reason) {
+            case JoinFailedBecauseFull:
+                this.setState({ modalState: "GameIsFull" });
+                return;
+            case JoinFailedBecauseWrongPassword:
+                this.setState({ modalState: "WrongPassword" });
+                return;
+            case JoinFailedBecauseBanned:
+                this.setState({ modalState: "YouAreBanned" });
+                return;
+        }
+    };
+
     private onConnectHandler = () => {
         this.setState({ connection: "Connected" });
     };
 
     private onDisconnectHandler = () => {
-        this.setState({ connection: "Disconnected" });
+        this.setState({ connection: "Disconnected", modalState: null });
     };
 
-    renderUIPhase() {
+    private showEnterPassword = () => {
+        this.setState({ modalState: "EnterPassword" });
+    };
+    private onKickWarningHandler = () => {
+        this.setState({ modalState: "KickWarning" });
+    };
+
+    private onKickHandler = () => {
+        this.setState({ modalState: "YouWereKicked" });
+    };
+
+    private hideModalUI = () => {
+        this.setState({ modalState: null });
+    };
+
+    private renderModalUI() {
+        switch (this.state.modalState) {
+            case "EnterPassword":
+                return <EnterPasswordUI onCancel={this.hideModalUI} />;
+            case "WrongPassword":
+                return <WrongPasswordUI onAccept={this.hideModalUI} />;
+            case "GameIsFull":
+                return <GameIsFullUI onAccept={this.hideModalUI} />;
+            case "KickWarning":
+                return <KickWarningUI onAccept={this.hideModalUI} />;
+            case "YouWereKicked":
+                return <YouWereKickedUI />;
+            case "YouAreBanned":
+                return <YouAreBannedUI onAccept={this.hideModalUI} />;
+        }
+    }
+
+    private renderUIPhase() {
         const s = this.state.gameState;
         if (this.state.connection === "Loading") {
             return (
@@ -78,21 +160,25 @@ export class ClientUI extends React.Component<Props, State> {
                 <MainContent backdrop="scattered_cards">
                     <h1>Disconnected</h1>
                     <hr />
-                    <p>
-                        Please reload the page or ask Tim to restart the server.
-                    </p>
+                    <div className="disconnected-main">
+                        <p>
+                            Please reload the page or ask Tim to restart the
+                            server.
+                        </p>
+                    </div>
                 </MainContent>
             );
         }
-        switch (s.phase) {
-            case "Join":
-                return <JoinPhaseUI gameState={s} />;
-            case "Pass":
-                return <PassPhaseUI gameState={s} />;
-            case "Play":
-                return <PlayPhaseUI gameState={s} />;
-            case "Score":
-                return <ScorePhaseUI gameState={s} />;
+        switch (s.view) {
+            case PlayerViewTag:
+                return <PlayerUI state={s} />;
+            case SpectatorViewTag:
+                return (
+                    <SpectatorUI
+                        state={s}
+                        requestJoin={this.showEnterPassword}
+                    />
+                );
         }
     }
 
@@ -100,6 +186,7 @@ export class ClientUI extends React.Component<Props, State> {
         return (
             <MessageContext.Provider value={this.sendMessageHandler}>
                 {this.renderUIPhase()}
+                {this.renderModalUI()}
             </MessageContext.Provider>
         );
     }

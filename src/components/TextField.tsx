@@ -4,6 +4,8 @@ interface Props {
     readonly onSubmit: (s: string) => void;
     readonly submitButton?: boolean;
     readonly placeHolder?: string;
+    readonly isPassword?: boolean;
+    readonly grabFocus?: boolean;
 }
 
 interface State {
@@ -33,12 +35,13 @@ export class TextField extends React.Component<Props, State> {
                 }}
             >
                 <input
-                    type="text"
+                    type={this.props.isPassword ? "password" : "text"}
                     className="text-field"
                     ref={this.inputRef}
                     value={this.state.value}
                     onChange={(e) => this.handleInput(e.target.value)}
                     placeholder={this.props.placeHolder}
+                    autoFocus={this.props.grabFocus}
                 ></input>
                 {this.props.submitButton ? (
                     <button type="submit">Submit</button>
