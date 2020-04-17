@@ -11,8 +11,8 @@ hear eachother speaking while they play, to keep the gameplay more natural and s
 
 ## How to build it
 
-Requires [yarn](https://yarnpkg.com/). After cloning, run `yarn` in the project root to fetch the
-dependencies. Then to build, run `yarn build` from the project root. You can optionally set the
+Requires [yarn](https://yarnpkg.com/). After cloning, run `$ yarn` in the project root to fetch the
+dependencies. Then to build, run `$ yarn build` from the project root. You can optionally set the
 `NODE_ENV` environment variable to either `development` or `production` to build in debug or release
 mode, respectively, before running the build command.
 
@@ -31,14 +31,14 @@ from. To run the server, you'll then need to set a few environment variables:
 - `GAME_PASSWORD_PATH` (optional) : the path to a plaintext file containing the SHA256 digest
   of the password required to join the game. If this is not set, no password will be required
   to play, and users can enter anything into the password field to gain entry to the game.
-  You can create this file easily by running `node hashpassword.js` which is found in the
-  `dist/util` path after building.
+  You can create this file and choose a new password easily by running `$ node hashpassword.js`
+  which is found in the `dist/util` path after building.
   
 The files these environment variables point to (with the exception of `PUBLIC_ROOT`) should all
 be considered secret and carefully guarded. If HTTPS proves to be too complicated, you can
 simply modify the source code to use a single HTTP server instead.
 
-Finally, once the environment variables above are set, run `node main.js`, where `main.js` is taken
+Finally, once the environment variables above are set, run `$ node main.js`, where `main.js` is taken
 from `dist/server/` after building. This will run an https server and websocket server
 on port 403 (the default for HTTPS), as well as an HTTP->HTTPS redirect server on port 80 (the
 default for HTTP). The redirect server simply upgrades traffic to use the secure protocol, and
