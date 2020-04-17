@@ -11,9 +11,10 @@ hear eachother speaking while they play, to keep the gameplay more natural and s
 
 ## How to build it
 
-Requires [yarn](https://yarnpkg.com/). To build, run `yarn build` from the project root. You can
-optionally set the `NODE_ENV` environment variable to either `development` or `production` to
-build in debug or release mode, respectively, before running the build command.
+Requires [yarn](https://yarnpkg.com/). After cloning, run `yarn` in the project root to fetch the
+dependencies. Then to build, run `yarn build` from the project root. You can optionally set the
+`NODE_ENV` environment variable to either `development` or `production` to build in debug or release
+mode, respectively, before running the build command.
 
 To deploy, simply copy everything in the `dist/` directory to where you want to host the server
 from. To run the server, you'll then need to set a few environment variables:
@@ -52,4 +53,6 @@ frontend uses [React](https://reactjs.org/) for the html UI. Two-way communicati
 JSON-based message system. The game state is stored and maintained using a pattern similar to
 [Redux](https://redux.js.org/), in that the game state is stored in a single variable, which
 is replaced (not modified) by a function taking the old state and an action which describes
-the desired changed. Indeed, most of this webapp is written in a very functional style.
+the desired changed. Indeed, most of this webapp is written in a very functional style. The build
+system uses [WebPack](https://webpack.js.org/) with a few plugins to easily and reliably build
+and bundle everything.
