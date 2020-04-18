@@ -21,7 +21,6 @@ from. To run the server, you'll then need to set a few environment variables:
 
 - `PUBLIC_ROOT` : the path to the folder whose where files are served by the HTTPS server.
   This is intended for the files placed into the `dist/public/` folder during build.
-  Typically you'll want be this value to be `./public`
 - `SECRET_KEY_PATH` : the path to the key file for the HTTPS server. You can generate this
   using OpenSSL (self-signed, but browsers will hate you), or, if you have a domain name,
   you can easily get certification from [Let's Encrpyt](https://letsencrypt.org/) and
