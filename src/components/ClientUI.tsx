@@ -111,7 +111,9 @@ export class ClientUI extends React.Component<Props, State> {
     };
 
     private onDisconnectHandler = () => {
-        this.setState({ connection: "Disconnected", modalState: null });
+        if (this.state.modalState !== "YouWereKicked") {
+            this.setState({ connection: "Disconnected", modalState: null });
+        }
     };
 
     private showEnterPassword = () => {
