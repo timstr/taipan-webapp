@@ -148,7 +148,7 @@ export const popStack = (stack: CardStack): [CardStack, Card] => {
     if (n === 0) {
         throw new Error("Attempted to pop empty stack");
     }
-    return [{ cards: stack.cards.slice(n - 1) }, stack.cards[n - 1]];
+    return [{ cards: stack.cards.slice(0, n - 1) }, stack.cards[n - 1]];
 };
 
 export const popDoubleStack = (
@@ -159,7 +159,7 @@ export const popDoubleStack = (
         throw new Error("Attempted to pop empty stack");
     }
     return [
-        { stacks: stackStack.stacks.slice(n - 1) },
+        { stacks: stackStack.stacks.slice(0, n - 1) },
         stackStack.stacks[n - 1],
     ];
 };
