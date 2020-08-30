@@ -102,20 +102,24 @@ const clientConfig = {
 
     plugins: [
         new CleanWebpackPlugin(),
-        new CopyPlugin([
-            {
-                from: "../static",
-                to: "static",
-            },
-            {
-                from: "../favicon.ico",
-                to: "favicon.ico",
-            },
-            {
-                from: `../index_${mode === "production" ? "dist" : "dev"}.html`,
-                to: "index.html",
-            },
-        ]),
+        new CopyPlugin({
+            patterns: [
+                {
+                    from: "../static",
+                    to: "static",
+                },
+                {
+                    from: "../favicon.ico",
+                    to: "favicon.ico",
+                },
+                {
+                    from: `../index_${
+                        mode === "production" ? "dist" : "dev"
+                    }.html`,
+                    to: "index.html",
+                },
+            ],
+        }),
     ],
 };
 

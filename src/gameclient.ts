@@ -20,6 +20,7 @@ import {
 } from "./interfaces/messages/servermessages";
 import { parseServerMessage } from "./interfaces/parse/messages";
 import { GameStateSpectatorView } from "./interfaces/game/view/spectatorview";
+import { SESSION_TOKEN_COOKIE_NAME } from "./sessiontoken";
 
 export type ViewOfGame = GameStateView | GameStateSpectatorView;
 
@@ -103,6 +104,9 @@ export class GameClient {
                 this.onKick.emit();
                 return true;
             case CLIENT_JOINED_GAME:
+                if (msg.payload.sessionToken !== null) {
+                    document.cookie = `${SESSION_TOKEN_COOKIE_NAME}=${msg.payload.sessionToken}`;
+                }
                 this.onJoinedGame.emit(msg.payload.gameState);
                 return true;
             case CLIENT_FAILED_TO_JOIN_GAME:

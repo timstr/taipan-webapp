@@ -26,9 +26,10 @@ import { PlayerIndex, AllPlayerIndices } from "./interfaces/game/player/player";
 import { parseClientMessage } from "./interfaces/parse/messages";
 import { HashResult, validSHA256Digest } from "./hash/hash";
 import { getEnvironmentVariable } from "./env";
-import { GameState } from "./interfaces/game/state/state";
+import { GameState, JoinPhaseTag } from "./interfaces/game/state/state";
 import { viewGameState } from "./interfaces/game/view/stateview";
 import { spectateGameState } from "./interfaces/game/view/spectatorview";
+import { generateNewSessionToken, parseSessionToken } from "./sessiontoken";
 
 const MAX_SPECTATOR_CONNECTIONS = 256;
 
@@ -54,6 +55,8 @@ interface ConnectionBase {
 interface PlayerConnection extends ConnectionBase {
     type: "Player";
     readonly index: PlayerIndex;
+    readonly sessionToken: string;
+    readonly waitingToReconnect: boolean;
 }
 
 interface SpectatorConnection extends ConnectionBase {
@@ -78,6 +81,9 @@ const secondsSinceSocketDidAnything = (conn: Connection) => {
 const noop = () => {};
 
 const pingConnection = (conn: Connection): boolean => {
+    if (conn.type === "Player" && conn.waitingToReconnect) {
+        return true;
+    }
     if (conn.isAlive === false) {
         console.log(
             `A ${conn.type} socket failed to respond to a ping request and is presumed dead.`
@@ -91,7 +97,7 @@ const pingConnection = (conn: Connection): boolean => {
 };
 
 type OnPlayerJoinedHandler = (idx: PlayerIndex) => void;
-type OnPlayerLeftHandler = (idx: PlayerIndex) => void;
+type OnPlayerDisconnectedHandler = (idx: PlayerIndex) => void;
 type onPlayerSentMessageHandler = (
     idx: PlayerIndex,
     msg: ClientMessage
@@ -118,7 +124,7 @@ export class SocketServer {
         }, KICK_INTERVAL_S * 1000);
 
         this.playerJoined = new Emitter();
-        this.playerLeft = new Emitter();
+        this.playerDisconnected = new Emitter();
         this.playerSentMessage = new Emitter();
 
         this.getCurrentState = getCurrentState;
@@ -126,10 +132,6 @@ export class SocketServer {
 
     close() {
         this.wss.close();
-    }
-
-    isPlayerConnected(idx: PlayerIndex): boolean {
-        return this.playerConnections[idx] !== null;
     }
 
     sendPlayerMessage(idx: PlayerIndex, message: ServerMessage) {
@@ -162,7 +164,7 @@ export class SocketServer {
     broadcastToPlayers(message: ServerMessage) {
         const s = serializeServerMessage(message);
         for (let conn of this.playerConnections) {
-            if (conn) {
+            if (conn && !conn.waitingToReconnect) {
                 conn.socket.send(s);
             }
         }
@@ -176,7 +178,7 @@ export class SocketServer {
     }
 
     playerJoined: Emitter<Parameters<OnPlayerJoinedHandler>>;
-    playerLeft: Emitter<Parameters<OnPlayerLeftHandler>>;
+    playerDisconnected: Emitter<Parameters<OnPlayerDisconnectedHandler>>;
     playerSentMessage: Emitter<Parameters<onPlayerSentMessageHandler>>;
 
     private getCurrentState: () => GameState;
@@ -207,7 +209,7 @@ export class SocketServer {
 
         for (let idx of AllPlayerIndices) {
             let conn = this.playerConnections[idx];
-            if (conn === null) {
+            if (conn === null || conn.waitingToReconnect) {
                 continue;
             }
             if (!pingConnection(conn)) {
@@ -251,6 +253,42 @@ export class SocketServer {
         ws: WebSocket,
         request: http.IncomingMessage
     ) => {
+        const sessionToken = parseSessionToken(request.headers);
+
+        if (sessionToken != null) {
+            for (let idx of AllPlayerIndices) {
+                const conn = this.playerConnections[idx];
+                if (conn === null) {
+                    continue;
+                }
+                if (
+                    conn.waitingToReconnect &&
+                    conn.sessionToken === sessionToken
+                ) {
+                    const newConn: PlayerConnection = {
+                        ...conn,
+                        socket: ws,
+                        waitingToReconnect: false,
+                    };
+                    this.activatePlayerListeners(newConn);
+
+                    this.playerConnections[idx] = newConn;
+
+                    console.log(`Player ${idx} rejoined the game`);
+
+                    const msg = clientJoinedGameMessage(
+                        viewGameState(this.getCurrentState(), idx),
+                        null
+                    );
+
+                    this.sendPlayerMessage(idx, msg);
+
+                    this.playerJoined.emit(idx);
+                    return;
+                }
+            }
+        }
+
         console.log(
             "New WebSocket connection from:",
             request.connection.remoteAddress
@@ -264,6 +302,43 @@ export class SocketServer {
         }
 
         this.addSpectatorSocket(ws);
+    };
+
+    private noop = () => {};
+
+    private activateSpectatorListeners = (conn: SpectatorConnection): void => {
+        conn.handleClose = (c, r) =>
+            this.handleSpectatorSocketClosed(conn, c, r);
+        conn.handleError = (e) => this.onSocketError(conn, e);
+        conn.handlePong = () => this.onSocketPongHandler(conn);
+        conn.handleMessage = (d: WebSocket.Data) =>
+            this.onSpectatorMessage(conn, d);
+
+        conn.socket.on("close", conn.handleClose);
+        conn.socket.on("error", conn.handleError);
+        conn.socket.on("pong", conn.handlePong);
+        conn.socket.on("message", conn.handleMessage);
+    };
+
+    private activatePlayerListeners = (playerConn: PlayerConnection): void => {
+        playerConn.handleClose = (c, r) =>
+            this.handlePlayerSocketClosed(playerConn, c, r);
+        playerConn.handleError = (e) => this.onSocketError(playerConn, e);
+        playerConn.handlePong = () => this.onSocketPongHandler(playerConn);
+        playerConn.handleMessage = (d: WebSocket.Data) =>
+            this.onPlayerMessage(playerConn, d);
+
+        playerConn.socket.on("close", playerConn.handleClose);
+        playerConn.socket.on("error", playerConn.handleError);
+        playerConn.socket.on("pong", playerConn.handlePong);
+        playerConn.socket.on("message", playerConn.handleMessage);
+    };
+
+    private deactivateListeners = (conn: ConnectionBase): void => {
+        conn.socket.off("close", conn.handleClose);
+        conn.socket.off("error", conn.handleError);
+        conn.socket.off("pong", conn.handlePong);
+        conn.socket.off("message", conn.handleMessage);
     };
 
     /**
@@ -307,12 +382,7 @@ export class SocketServer {
 
         this.eraseSpectatorConnection(spectatorConn);
 
-        spectatorConn.socket.off("close", spectatorConn.handleClose);
-        spectatorConn.socket.off("error", spectatorConn.handleError);
-        spectatorConn.socket.off("pong", spectatorConn.handlePong);
-        spectatorConn.socket.off("message", spectatorConn.handleMessage);
-
-        const stub = () => {};
+        this.deactivateListeners(spectatorConn);
 
         let playerConn: PlayerConnection = {
             type: "Player",
@@ -321,28 +391,23 @@ export class SocketServer {
             index: newIdx,
             lastDidAnything: rightNow(),
             hasPendingWarning: false,
-            handleClose: stub,
-            handleError: stub,
-            handlePong: stub,
-            handleMessage: stub,
+            sessionToken: generateNewSessionToken(),
+            waitingToReconnect: false,
+            handleClose: this.noop,
+            handleError: this.noop,
+            handlePong: this.noop,
+            handleMessage: this.noop,
         };
 
-        playerConn.handleClose = (c, r) =>
-            this.handlePlayerSocketClosed(playerConn, c, r);
-        playerConn.handleError = (e) => this.onSocketError(playerConn, e);
-        playerConn.handlePong = () => this.onSocketPongHandler(playerConn);
-        playerConn.handleMessage = (d: WebSocket.Data) =>
-            this.onPlayerMessage(playerConn, d);
-
-        playerConn.socket.on("close", playerConn.handleClose);
-        playerConn.socket.on("error", playerConn.handleError);
-        playerConn.socket.on("pong", playerConn.handlePong);
-        playerConn.socket.on("message", playerConn.handleMessage);
+        this.activatePlayerListeners(playerConn);
 
         this.playerConnections[newIdx] = playerConn;
 
         const st = this.getCurrentState();
-        const msg = clientJoinedGameMessage(viewGameState(st, newIdx));
+        const msg = clientJoinedGameMessage(
+            viewGameState(st, newIdx),
+            playerConn.sessionToken
+        );
         this.sendMessage(playerConn, msg);
 
         this.playerJoined.emit(newIdx);
@@ -362,31 +427,19 @@ export class SocketServer {
     };
 
     private addSpectatorSocket = (ws: WebSocket) => {
-        const stub = () => {};
-
         let conn: SpectatorConnection = {
             type: "Spectator",
             socket: ws,
             isAlive: true,
             lastDidAnything: rightNow(),
             hasPendingWarning: false,
-            handleClose: stub,
-            handleError: stub,
-            handlePong: stub,
-            handleMessage: stub,
+            handleClose: this.noop,
+            handleError: this.noop,
+            handlePong: this.noop,
+            handleMessage: this.noop,
         };
 
-        conn.handleClose = (c, r) =>
-            this.handleSpectatorSocketClosed(conn, c, r);
-        conn.handleError = (e) => this.onSocketError(conn, e);
-        conn.handlePong = () => this.onSocketPongHandler(conn);
-        conn.handleMessage = (d: WebSocket.Data) =>
-            this.onSpectatorMessage(conn, d);
-
-        ws.on("close", conn.handleClose);
-        ws.on("error", conn.handleError);
-        ws.on("pong", conn.handlePong);
-        ws.on("message", conn.handleMessage);
+        this.activateSpectatorListeners(conn);
 
         this.spectatorConnections.push(conn);
 
@@ -402,6 +455,7 @@ export class SocketServer {
         reason: string
     ) => {
         console.log(`A spectator's socket closed: (${code}), "${reason}"`);
+        this.deactivateListeners(conn);
         this.eraseSpectatorConnection(conn);
     };
 
@@ -410,10 +464,38 @@ export class SocketServer {
         code: number,
         reason: string
     ) => {
+        this.deactivateListeners(conn);
         const idx = conn.index;
-        this.playerLeft.emit(idx);
-        this.playerConnections[idx] = null;
+        const justRemovePlayer = this.getCurrentState().phase === JoinPhaseTag;
+        this.playerConnections[idx] = justRemovePlayer
+            ? null
+            : {
+                  ...conn,
+                  handleClose: this.noop,
+                  handleError: this.noop,
+                  handleMessage: this.noop,
+                  handlePong: this.noop,
+                  waitingToReconnect: true,
+              };
+
+        this.playerDisconnected.emit(idx);
         console.log(`Player ${idx}'s socket closed: (${code}) "${reason}"`);
+
+        const isPlayerConnected = (conn: PlayerConnection | null): boolean => {
+            return conn ? !conn.waitingToReconnect : false;
+        };
+
+        const numPlayersConnected = this.playerConnections.reduce(
+            (acc, p) => (isPlayerConnected(p) ? acc + 1 : acc),
+            0
+        );
+
+        if (numPlayersConnected === 0) {
+            this.playerConnections = [null, null, null, null];
+            console.log(
+                "The last player disconnected, and all connections have been reset"
+            );
+        }
     };
 
     private onSocketError = (conn: Connection, error: Error) => {

@@ -3,8 +3,8 @@ import { PlayPhaseSpectatorView } from "../../interfaces/game/view/spectatorview
 import { MainContent } from "../MainContent";
 import { Header } from "../Header";
 import { PlayPhaseTag } from "../../interfaces/game/state/state";
-import { OtherPlayerPlayingUI } from "../../OtherPlayerPlayingUI";
 import { RowsOfCards } from "../CardUI";
+import { OtherPlayerPlayingUI } from "../OtherPlayerPlayingUI";
 
 interface Props {
     readonly gameState: PlayPhaseSpectatorView;

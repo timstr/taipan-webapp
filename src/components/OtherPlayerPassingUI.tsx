@@ -1,6 +1,7 @@
 import * as React from "react";
 import { PassPhasePlayerView } from "../interfaces/game/view/stateview";
 import { PileOfCards } from "./CardUI";
+import { DisconnectedIcon } from "./DisconnectedIcon";
 
 interface OtherPlayerPassingProps {
     readonly player: PassPhasePlayerView;
@@ -18,6 +19,7 @@ export const OtherPlayerPassing = (props: OtherPlayerPassingProps) => {
             <h3>
                 {props.player.profile.name} <em>({props.positionTitle})</em>
             </h3>
+            {props.player.connected ? null : <DisconnectedIcon />}
             <PileOfCards
                 cards={props.player.cardsInHand}
                 size="small"

@@ -3,10 +3,10 @@ import { PlayerIndex } from "../player/player";
 import {
     JoinPhaseAction,
     PLAYER_JOINED,
-    PLAYER_LEFT,
     PLAYER_CHOSE_NAME,
     PLAYER_CHOSE_POSITION,
     PLAYER_IS_READY,
+    PLAYER_DISCONNECTED,
 } from "../actions/joinphase";
 import {
     mapGamePlayersFunction,
@@ -31,7 +31,7 @@ export function updateJoinPhase(
                 players: mapPlayers(replace(whichPlayer, { ready: false })),
             };
         }
-        case PLAYER_LEFT: {
+        case PLAYER_DISCONNECTED: {
             return {
                 ...oldState,
                 players: mapPlayers(replace(whichPlayer, null)),

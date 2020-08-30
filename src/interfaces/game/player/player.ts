@@ -23,6 +23,8 @@ export interface SeatedPlayers<T> {
     readonly west: T;
 }
 
+export type Disconnected = "Disconnected";
+
 export interface OtherPlayers<T> {
     readonly leftOpponent: T;
     readonly partner: T;

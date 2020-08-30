@@ -2,9 +2,9 @@ import { GameServer } from "./gameserver";
 import * as http from "http";
 import * as https from "https";
 import * as url from "url";
-import * as node_static from "node-static";
 import { Game } from "./interfaces/game/game";
 import { Emitter } from "./interfaces/emitter";
+import * as express from "express";
 import * as fs from "fs";
 import { getEnvironmentVariable } from "./env";
 
@@ -22,15 +22,12 @@ export class Server {
             cert: fs.readFileSync(certPath),
         };
 
-        const file = new node_static.Server(publicRoot);
-
         console.log(`HTTPS server serving files from ${publicRoot}`);
 
-        this.httpsServer = https.createServer(options, (req, res) => {
-            req.addListener("end", () => {
-                file.serve(req, res);
-            }).resume();
-        });
+        const app = express();
+        app.use(express.static(publicRoot));
+
+        this.httpsServer = https.createServer(options, app);
         this.httpsServer.listen(HTTPS_PORT);
         this.httpsServer.on("tlsClientError", (e) => {
             console.error("TLS Error!");
@@ -40,17 +37,7 @@ export class Server {
         });
         console.log(`HTTPS server listening on port ${HTTPS_PORT}`);
 
-        this.httpRedirectServer = http.createServer({}, (req, res) => {
-            const pathName = (req.url ? url.parse(req.url).pathname : "") || "";
-            const redirectURL = new url.URL(
-                pathName,
-                "https://timstaipanserver.ca/"
-            );
-            res.writeHead(301, {
-                Location: redirectURL.toString(),
-            });
-            res.end();
-        });
+        this.httpRedirectServer = http.createServer({}, this.redirectToHTTPS);
         this.httpRedirectServer.listen(HTTP_REDIRECT_PORT);
         console.log(
             `HTTP redirect server listening on port ${HTTP_REDIRECT_PORT}`
@@ -72,6 +59,24 @@ export class Server {
     getGame(): Game {
         return this.gameServer.getGame();
     }
+
+    private redirectToHTTPS = (
+        req: http.IncomingMessage,
+        res: http.ServerResponse
+    ): void => {
+        const theUrl = req.url ? url.parse(req.url) : null;
+        const pathName = theUrl?.path || "";
+        // NOTE: hostname appears to be null here, perhaps it is not visible
+        // after the domain name is resolved to the server's IP address
+        const redirectURL = new url.URL(
+            pathName,
+            "https://timstaipanserver.ca/"
+        );
+        res.writeHead(301, {
+            Location: redirectURL.toString(),
+        });
+        res.end();
+    };
 
     onClose: Emitter<[]>;
 

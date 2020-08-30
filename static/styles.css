@@ -406,3 +406,10 @@ h6 {
 .faded-card {
     opacity: 0.5;
 }
+.disconnected-icon {
+    padding: 5px;
+    text-align: center;
+}
+.disconnected-icon-inner {
+    color: #202020;
+}

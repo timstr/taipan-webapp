@@ -62,7 +62,11 @@ export const ScorePhaseUI = (props: ScorePhaseProps) => {
                             positionTitle="Right Opponent"
                         />
                     </div>
-                    <PlayerScoreUI player={s.you} positionTitle="You" isYou />
+                    <PlayerScoreUI
+                        player={{ ...s.you, connected: true }}
+                        positionTitle="You"
+                        isYou
+                    />
                     <div className="button-and-check-mark">
                         <p>{readyPlayersMessage}</p>
                         <button

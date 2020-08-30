@@ -33,7 +33,7 @@ import {
     ScorePhasePlayer,
     DealPhasePlayer,
 } from "../playerstate";
-import { PlayerIndex } from "../player/player";
+import { PlayerIndex, mapAllPlayers } from "../player/player";
 import { leftOpponentOf, partnerOf, rightOpponentOf } from "../player/position";
 
 export function upgradeToDealPhase(state: JoinPhaseState): DealPhaseState {
@@ -66,6 +66,7 @@ export function upgradeToDealPhase(state: JoinPhaseState): DealPhaseState {
                 name: p.name,
                 position: p.position,
             },
+            connected: true,
             firstDeal,
             secondDeal,
             tookSecondDeal: false,
@@ -76,12 +77,7 @@ export function upgradeToDealPhase(state: JoinPhaseState): DealPhaseState {
 
     return {
         phase: DealPhaseTag,
-        players: [
-            upgradePlayer(pp[0], 0),
-            upgradePlayer(pp[1], 1),
-            upgradePlayer(pp[2], 2),
-            upgradePlayer(pp[3], 3),
-        ],
+        players: mapAllPlayers(pp, upgradePlayer),
     };
 }
 
@@ -97,6 +93,7 @@ export function upgradeToPassPhase(state: DealPhaseState): PassPhaseState {
         }
         return {
             profile: p.profile,
+            connected: p.connected,
             inHand: sortCards(concatStacks(p.firstDeal, p.secondDeal)),
             give: {
                 leftOpponent: null,
@@ -111,12 +108,7 @@ export function upgradeToPassPhase(state: DealPhaseState): PassPhaseState {
 
     return {
         phase: PassPhaseTag,
-        players: [
-            upgradePlayer(pp[0], 0),
-            upgradePlayer(pp[1], 1),
-            upgradePlayer(pp[2], 2),
-            upgradePlayer(pp[3], 3),
-        ],
+        players: mapAllPlayers(pp, upgradePlayer),
     };
 }
 
@@ -179,6 +171,7 @@ export function upgradeToPlayPhase(state: PassPhaseState): PlayPhaseState {
         const newHand = sortCards(playerHands[i]);
         return {
             profile: player.profile,
+            connected: player.connected,
             inHand: newHand,
             tricksWon: EmptyTripleStack,
             staged: EmptyStack,
@@ -202,6 +195,7 @@ export function upgradeToScorePhase(state: PlayPhaseState): ScorePhaseState {
         const player = state.players[i];
         return {
             profile: player.profile,
+            connected: player.connected,
             cards: concatStacks(
                 flattenTripleStack(player.tricksWon),
                 player.inHand

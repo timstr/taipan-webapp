@@ -1,6 +1,7 @@
 import * as React from "react";
-import { PlayPhasePlayerView } from "./interfaces/game/view/stateview";
-import { PileOfCards } from "./components/CardUI";
+import { PlayPhasePlayerView } from "../interfaces/game/view/stateview";
+import { PileOfCards } from "./CardUI";
+import { DisconnectedIcon } from "./DisconnectedIcon";
 
 interface Props {
     readonly positionTitle: string;
@@ -17,6 +18,7 @@ export const OtherPlayerPlayingUI = (props: Props) => {
             <h4>
                 <em>{props.positionTitle}</em>
             </h4>
+            {props.player.connected ? null : <DisconnectedIcon />}
         </>,
         <hr />,
         <>

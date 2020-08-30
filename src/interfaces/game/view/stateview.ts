@@ -50,8 +50,12 @@ export interface JoinPhaseView {
     readonly players: AllPlayers<PendingPlayer>;
 }
 
-export interface DealPhasePlayerView {
+export interface PlayerView {
     readonly profile: PlayerProfile;
+    readonly connected: boolean;
+}
+
+export interface DealPhasePlayerView extends PlayerView {
     readonly cardsInHand: number;
     readonly cardsNotTaken: number;
 }
@@ -65,22 +69,22 @@ export interface DealPhaseView {
     readonly others: OtherPlayers<DealPhasePlayerView>;
 }
 
-export interface PassPhasePlayerView {
-    readonly profile: PlayerProfile;
+export interface PassPhasePlayerView extends PlayerView {
     readonly give: OtherPlayers<boolean>;
     readonly cardsInHand: number;
     readonly ready: boolean;
 }
 
+export type DefinitelyConnected<T> = Omit<T, "connected">;
+
 export interface PassPhaseView {
     readonly view: PlayerViewTag;
     readonly phase: PassPhaseTag;
-    readonly you: PassPhasePlayer;
+    readonly you: DefinitelyConnected<PassPhasePlayer>;
     readonly others: OtherPlayers<PassPhasePlayerView>;
 }
 
-export interface PlayPhasePlayerView {
-    readonly profile: PlayerProfile;
+export interface PlayPhasePlayerView extends PlayerView {
     readonly cardsInHand: number;
     readonly cardsStaged: number;
     readonly cardsWon: number;
@@ -90,14 +94,14 @@ export interface PlayPhaseView {
     readonly view: PlayerViewTag;
     readonly phase: PlayPhaseTag;
     readonly currentTrick: CardDoubleStack;
-    readonly you: PlayPhasePlayer;
+    readonly you: DefinitelyConnected<PlayPhasePlayer>;
     readonly others: OtherPlayers<PlayPhasePlayerView>;
 }
 
 export interface ScorePhaseView {
     readonly view: PlayerViewTag;
     readonly phase: ScorePhaseTag;
-    readonly you: ScorePhasePlayer;
+    readonly you: DefinitelyConnected<ScorePhasePlayer>;
     readonly others: OtherPlayers<ScorePhasePlayer>;
 }
 
@@ -128,6 +132,7 @@ export function viewPassPhasePlayer(
         (g.rightOpponent ? 1 : 0);
     return {
         profile: player.profile,
+        connected: player.connected,
         give: mapOtherPlayers(player.give, (c) => c !== null),
         cardsInHand: countStack(player.inHand) - nGiving,
         ready: player.ready,
@@ -141,6 +146,7 @@ export function viewDealPhasePlayer(
     const n2 = countStack(player.secondDeal);
     return {
         profile: player.profile,
+        connected: player.connected,
         cardsInHand: player.tookSecondDeal ? n1 + n2 : n1,
         cardsNotTaken: player.tookSecondDeal ? 0 : n2,
     };
@@ -151,6 +157,7 @@ export function viewPlayPhasePlayer(
 ): PlayPhasePlayerView {
     return {
         profile: player.profile,
+        connected: player.connected,
         cardsInHand: countStack(player.inHand),
         cardsStaged: countStack(player.staged),
         cardsWon: countTripleStack(player.tricksWon),

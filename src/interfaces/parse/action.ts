@@ -2,8 +2,6 @@ import {
     JoinPhaseAction,
     PLAYER_JOINED,
     playerJoinedAction,
-    PLAYER_LEFT,
-    playerLeftAction,
     PLAYER_CHOSE_NAME,
     playerChoseNameAction,
     PlayerChoseNameAction,
@@ -12,6 +10,8 @@ import {
     playerChosePositionAction,
     PLAYER_IS_READY,
     playerIsReadyAction,
+    playerDisconnectedAction,
+    PLAYER_DISCONNECTED,
 } from "../game/actions/joinphase";
 import { getProperty, expectObject, getPropertyOr } from "./helpers";
 import { PayloadType } from "../game/actions/createaction";
@@ -72,8 +72,8 @@ export function validateJoinPhaseAction(
         switch (type as JoinPhaseAction["type"]) {
             case PLAYER_JOINED:
                 return playerJoinedAction();
-            case PLAYER_LEFT:
-                return playerLeftAction();
+            case PLAYER_DISCONNECTED:
+                return playerDisconnectedAction();
             case PLAYER_CHOSE_NAME:
                 return playerChoseNameAction(
                     getProperty(

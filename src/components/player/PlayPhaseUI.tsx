@@ -19,7 +19,7 @@ import {
 } from "../../interfaces/game/actions/playphase";
 import { Header } from "../Header";
 import { MainContent } from "../MainContent";
-import { OtherPlayerPlayingUI } from "../../OtherPlayerPlayingUI";
+import { OtherPlayerPlayingUI } from "../OtherPlayerPlayingUI";
 
 interface CardProps {
     readonly card: Card;

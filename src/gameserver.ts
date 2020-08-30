@@ -3,7 +3,7 @@ import { SocketServer } from "./socketserver";
 import { Game } from "./interfaces/game/game";
 import {
     playerJoinedAction,
-    playerLeftAction,
+    playerDisconnectedAction,
 } from "./interfaces/game/actions/joinphase";
 import { playerAction } from "./interfaces/game/actions/createaction";
 import {
@@ -21,7 +21,9 @@ export class GameServer {
 
         this.socketServer.playerJoined.addListener(this.onPlayerJoined);
 
-        this.socketServer.playerLeft.addListener(this.onPlayerLeft);
+        this.socketServer.playerDisconnected.addListener(
+            this.onPlayerDisconnected
+        );
 
         this.socketServer.playerSentMessage.addListener(
             this.onPlayerSentMessage
@@ -45,8 +47,8 @@ export class GameServer {
         this.game.update(playerAction(idx, playerJoinedAction()));
     };
 
-    private onPlayerLeft = (idx: PlayerIndex) => {
-        this.game.update(playerAction(idx, playerLeftAction()));
+    private onPlayerDisconnected = (idx: PlayerIndex) => {
+        this.game.update(playerAction(idx, playerDisconnectedAction()));
     };
 
     private onPlayerSentMessage = (

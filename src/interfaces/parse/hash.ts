@@ -5,7 +5,7 @@ export function validateHashResult(x: any): HashResult {
     const o = expectObject(x) as HashResult;
     const s = getProperty(o, "hexHashData", "string");
     if (!validSHA256Digest(s)) {
-        throw new Error("Invalid digest in hash result");
+        throw new Error("Invalid digest in hash result: \n" + s);
     }
     return {
         hexHashData: s,

@@ -6,7 +6,12 @@ import {
     CLIENT_WANTS_TO_PLAY,
     ClientWantsToPlayMessage,
 } from "../messages/clientmessages";
-import { getProperty, getPropertyOr, expectObject } from "./helpers";
+import {
+    getProperty,
+    getPropertyOr,
+    expectObject,
+    getNullableProperty,
+} from "./helpers";
 import { validateAction } from "./action";
 import {
     ServerMessage,
@@ -127,7 +132,12 @@ export function parseServerMessage(msg: string): ServerMessage | null {
                         ClientJoinedGameMessage
                     >;
                     const newState = validateGameStateView(p.gameState);
-                    return clientJoinedGameMessage(newState);
+                    const sessionToken = getNullableProperty(
+                        p,
+                        "sessionToken",
+                        "string"
+                    );
+                    return clientJoinedGameMessage(newState, sessionToken);
                 }
                 case CLIENT_FAILED_TO_JOIN_GAME: {
                     const p = expectObject(payload) as PayloadType<

@@ -41,6 +41,7 @@ const makePlayerJoinPhase = (i: PlayerIndex): PendingPlayer => ({
 
 const makePlayerDealPhase = (i: PlayerIndex): DealPhasePlayer => ({
     profile: makePlayerProfile(i),
+    connected: true,
     firstDeal: { cards: cardsDealt[i].cards.slice(0, 8) },
     secondDeal: { cards: cardsDealt[i].cards.slice(8, 14) },
     tookSecondDeal: false,
@@ -48,6 +49,7 @@ const makePlayerDealPhase = (i: PlayerIndex): DealPhasePlayer => ({
 
 const makePlayerPassPhase = (i: PlayerIndex): PassPhasePlayer => ({
     profile: makePlayerProfile(i),
+    connected: true,
     inHand: cardsDealt[i],
     give: {
         leftOpponent: cardsDealt[i].cards[0],
@@ -59,12 +61,14 @@ const makePlayerPassPhase = (i: PlayerIndex): PassPhasePlayer => ({
 
 const makePlayerPlayPhase = (i: PlayerIndex): PlayPhasePlayer => ({
     profile: makePlayerProfile(i),
+    connected: true,
     inHand: sortCards(cardsDealt[i]),
     tricksWon: EmptyTripleStack,
     staged: EmptyStack,
 });
 const makePlayerScorePhase = (i: PlayerIndex): ScorePhasePlayer => ({
     profile: makePlayerProfile(i),
+    connected: true,
     cards: cardsDealt[i],
     readyToPlayAgain: false,
 });

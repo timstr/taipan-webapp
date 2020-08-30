@@ -14,8 +14,10 @@ export const clientWasKickedMessage = () => createMessage(CLIENT_WAS_KICKED);
 export type ClientWasKickedMessage = ReturnType<typeof clientWasKickedMessage>;
 
 export const CLIENT_JOINED_GAME = "Server:ClientJoinedGame";
-export const clientJoinedGameMessage = (gameState: GameStateView) =>
-    createMessage(CLIENT_JOINED_GAME, { gameState });
+export const clientJoinedGameMessage = (
+    gameState: GameStateView,
+    sessionToken: string | null
+) => createMessage(CLIENT_JOINED_GAME, { gameState, sessionToken });
 export type ClientJoinedGameMessage = ReturnType<
     typeof clientJoinedGameMessage
 >;
