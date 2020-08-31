@@ -7,13 +7,10 @@ import {
     allCardsInPlay,
     DealPhaseTag,
     JoinPhaseState,
+    DefaultGameState,
 } from "../state/state";
 import { PlayerAction } from "../actions/actions";
-import {
-    backToJoinPhase,
-    PLAYER_DISCONNECTED,
-    PLAYER_JOINED,
-} from "../actions/joinphase";
+import { PLAYER_DISCONNECTED, PLAYER_JOINED } from "../actions/joinphase";
 import { deckIsValid } from "../../cards";
 import { mapAllPlayers, PlayerIndex } from "../player/player";
 import { updateJoinPhase } from "./joinphase";
@@ -91,7 +88,7 @@ const updateGameStateImpl = (
             }
 
             if (numStillConnected === 0) {
-                return backToJoinPhase(oldState);
+                return DefaultGameState;
             }
 
             return newState;

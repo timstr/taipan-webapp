@@ -1,15 +1,6 @@
 import { createAction } from "./createaction";
 import { PlayerPosition } from "../player/position";
-import {
-    JoinPhaseTag,
-    JoinPhaseState,
-    GameState,
-    PassPhaseTag,
-    PlayPhaseTag,
-    ScorePhaseTag,
-    DealPhaseTag,
-} from "../state/state";
-import { PendingPlayer, Player } from "../playerstate";
+import { JoinPhaseTag } from "../state/state";
 
 export const PLAYER_JOINED = "PLAYER_JOINED";
 export const playerJoinedAction = () =>
@@ -46,33 +37,3 @@ export type JoinPhaseAction =
     | PlayerChoseNameAction
     | PlayerChosePositionAction
     | PlayerIsReadyAction;
-
-export function backToJoinPhase(state: GameState): JoinPhaseState {
-    const makePlayer = (p: Player): PendingPlayer => {
-        if (!p.connected) {
-            return null;
-        }
-        return {
-            name: p.profile.name,
-            position: p.profile.position,
-            ready: false,
-        };
-    };
-    switch (state.phase) {
-        case JoinPhaseTag:
-            return state;
-        case DealPhaseTag:
-        case PassPhaseTag:
-        case PlayPhaseTag:
-        case ScorePhaseTag:
-            return {
-                phase: JoinPhaseTag,
-                players: [
-                    makePlayer(state.players[0]),
-                    makePlayer(state.players[1]),
-                    makePlayer(state.players[2]),
-                    makePlayer(state.players[3]),
-                ],
-            };
-    }
-}

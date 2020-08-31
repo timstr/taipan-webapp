@@ -88,7 +88,6 @@ const pingConnection = (conn: Connection): boolean => {
         console.log(
             `A ${conn.type} socket failed to respond to a ping request and is presumed dead.`
         );
-        conn.socket.terminate();
         return false;
     }
     conn.isAlive = false; // Let's hope for the best
@@ -203,17 +202,23 @@ export class SocketServer {
     private pathToPasswordFile: string | null;
 
     private handleHeartBeat = () => {
-        this.spectatorConnections = this.spectatorConnections.filter(
-            pingConnection
-        );
+        this.spectatorConnections = this.spectatorConnections.filter((c) => {
+            const isAlive = pingConnection(c);
+            if (!isAlive) {
+                c.socket.terminate();
+            }
+            return isAlive;
+        });
 
         for (let idx of AllPlayerIndices) {
             let conn = this.playerConnections[idx];
-            if (conn === null || conn.waitingToReconnect) {
+            if (conn === null) {
                 continue;
             }
             if (!pingConnection(conn)) {
-                this.playerConnections[idx] = null;
+                this.deactivateListeners(conn);
+                conn.socket.terminate();
+                this.handlePlayerSocketClosed(conn);
             }
         }
     };
@@ -268,6 +273,7 @@ export class SocketServer {
                     const newConn: PlayerConnection = {
                         ...conn,
                         socket: ws,
+                        isAlive: true,
                         waitingToReconnect: false,
                     };
                     this.activatePlayerListeners(newConn);
@@ -321,8 +327,8 @@ export class SocketServer {
     };
 
     private activatePlayerListeners = (playerConn: PlayerConnection): void => {
-        playerConn.handleClose = (c, r) =>
-            this.handlePlayerSocketClosed(playerConn, c, r);
+        playerConn.handleClose = () =>
+            this.handlePlayerSocketClosed(playerConn);
         playerConn.handleError = (e) => this.onSocketError(playerConn, e);
         playerConn.handlePong = () => this.onSocketPongHandler(playerConn);
         playerConn.handleMessage = (d: WebSocket.Data) =>
@@ -459,11 +465,7 @@ export class SocketServer {
         this.eraseSpectatorConnection(conn);
     };
 
-    private handlePlayerSocketClosed = (
-        conn: PlayerConnection,
-        code: number,
-        reason: string
-    ) => {
+    private handlePlayerSocketClosed = (conn: PlayerConnection) => {
         this.deactivateListeners(conn);
         const idx = conn.index;
         const justRemovePlayer = this.getCurrentState().phase === JoinPhaseTag;
@@ -479,7 +481,7 @@ export class SocketServer {
               };
 
         this.playerDisconnected.emit(idx);
-        console.log(`Player ${idx}'s socket closed: (${code}) "${reason}"`);
+        console.log(`Player ${idx}'s socket closed`);
 
         const isPlayerConnected = (conn: PlayerConnection | null): boolean => {
             return conn ? !conn.waitingToReconnect : false;
