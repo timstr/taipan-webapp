@@ -1,6 +1,5 @@
 import * as WebSocket from "ws";
 import * as http from "http";
-import * as https from "https";
 import * as fs from "fs";
 import { TextDecoder } from "util";
 import { Emitter } from "./interfaces/emitter";
@@ -30,6 +29,7 @@ import { GameState, JoinPhaseTag } from "./interfaces/game/state/state";
 import { viewGameState } from "./interfaces/game/view/stateview";
 import { spectateGameState } from "./interfaces/game/view/spectatorview";
 import { generateNewSessionToken, parseSessionToken } from "./sessiontoken";
+import { HTTPServer } from "./app";
 
 const MAX_SPECTATOR_CONNECTIONS = 256;
 
@@ -103,8 +103,8 @@ type onPlayerSentMessageHandler = (
 ) => void;
 
 export class SocketServer {
-    constructor(httpServer: https.Server, getCurrentState: () => GameState) {
-        this.wss = new WebSocket.Server({ server: httpServer });
+    constructor(httpServer: HTTPServer, getCurrentState: () => GameState) {
+        this.wss = new WebSocket.Server({ server: httpServer.server });
         this.wss.on("connection", this.handleNewConnection);
         this.wss.on("error", this.handlerServerError);
         this.wss.on("close", this.handleServerClosed);

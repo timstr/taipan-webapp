@@ -1,4 +1,3 @@
-import * as https from "https";
 import { SocketServer } from "./socketserver";
 import { Game } from "./interfaces/game/game";
 import {
@@ -11,9 +10,10 @@ import {
     PLAYER_DID_ACTION,
 } from "./interfaces/messages/clientmessages";
 import { PlayerIndex } from "./interfaces/game/player/player";
+import { HTTPServer } from "./app";
 
 export class GameServer {
-    constructor(httpServer: https.Server) {
+    constructor(httpServer: HTTPServer) {
         this.socketServer = new SocketServer(httpServer, () =>
             this.getGame().getGameState()
         );

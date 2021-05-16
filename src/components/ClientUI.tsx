@@ -27,7 +27,7 @@ import { KickWarningUI } from "./modal/KickWarningUI";
 import { YouWereKickedUI } from "./modal/YouWereKickedUI";
 import { YouAreBannedUI } from "./modal/YouAreBannedUI";
 
-const HOSTNAME = `wss://${window.location.host}`;
+const HOSTNAME = `${window.location.host}`;
 
 interface Props {}
 
