@@ -16,7 +16,13 @@ import {
     GamePhase,
     DealPhaseTag,
 } from "../../game/state/state";
-import { expectQuadruple, getProperty, expectObject } from "../helpers";
+import {
+    expectQuadruple,
+    getProperty,
+    expectObject,
+    expectNumber,
+    expectString,
+} from "../helpers";
 import { mapAllPlayers, mapSeatedPlayers } from "../../game/player/player";
 import { validatePendingPlayer } from "../playerstate";
 import { getCardDoubleStack } from "../cards";
@@ -42,7 +48,7 @@ export function validateJoinPhaseSpectatorView(x: any): JoinPhaseSpectatorView {
     return {
         view: SpectatorViewTag,
         phase: JoinPhaseTag,
-        numPlayers: getProperty(sv, "numPlayers", "number"),
+        numPlayers: getProperty(sv, "numPlayers", expectNumber),
         players: mapAllPlayers(pp, validatePendingPlayer),
     };
 }
@@ -54,7 +60,7 @@ export function validateDealPhaseSpectatorView(x: any): DealPhaseSpectatorView {
     const pp = getProperty(
         sv,
         "players",
-        "object"
+        expectObject
     ) as DealPhaseSpectatorView["players"];
     return {
         view: SpectatorViewTag,
@@ -70,7 +76,7 @@ export function validatePassPhaseSpectatorView(x: any): PassPhaseSpectatorView {
     const pp = getProperty(
         sv,
         "players",
-        "object"
+        expectObject
     ) as PassPhaseSpectatorView["players"];
     return {
         view: SpectatorViewTag,
@@ -86,7 +92,7 @@ export function validatePlayPhaseSpectatorView(x: any): PlayPhaseSpectatorView {
     const pp = getProperty(
         sv,
         "players",
-        "object"
+        expectObject
     ) as PlayPhaseSpectatorView["players"];
     return {
         view: SpectatorViewTag,
@@ -105,7 +111,7 @@ export function validateScorePhaseSpectatorView(
     const pp = getProperty(
         sv,
         "players",
-        "object"
+        expectObject
     ) as ScorePhaseSpectatorView["players"];
     return {
         view: SpectatorViewTag,
@@ -117,7 +123,7 @@ export function validateScorePhaseSpectatorView(
 export function validateGameStateSpectatorView(x: any): GameStateSpectatorView {
     const sv = ((): GameStateSpectatorView => {
         const obj = expectObject(x) as GameStateSpectatorView;
-        const phase = getProperty(obj, "phase", "string");
+        const phase = getProperty(obj, "phase", expectString);
         switch (phase as GamePhase) {
             case JoinPhaseTag:
                 return validateJoinPhaseSpectatorView(obj);

@@ -15,3 +15,10 @@ export type NotUnion<T> = IsUnion<T> extends false ? T : never;
 export type KeyMustBe<O extends object, K extends keyof O, T> = O[K] extends T
     ? K
     : never;
+
+export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+    obj: X,
+    prop: Y
+): obj is X & Record<Y, unknown> {
+    return obj.hasOwnProperty(prop);
+}

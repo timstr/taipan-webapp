@@ -1,5 +1,5 @@
 import { AllPlayerIndices, PlayerProfile } from "../game/player/player";
-import { expectObject, getProperty } from "./helpers";
+import { expectObject, expectString, getProperty } from "./helpers";
 import { validatePosition } from "./position";
 
 export function validatePlayerIndex(x: any) {
@@ -15,7 +15,7 @@ export function validatePlayerIndex(x: any) {
 export function validatePlayerProfile(x: any): PlayerProfile {
     const pp = expectObject(x) as PlayerProfile;
     return {
-        name: getProperty(pp, "name", "string"),
+        name: getProperty(pp, "name", expectString),
         position: validatePosition(pp.position),
     };
 }

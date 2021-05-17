@@ -1,5 +1,10 @@
 import { PendingPlayer } from "../game/playerstate";
-import { getPropertyOr, getProperty } from "./helpers";
+import {
+    expectBoolean,
+    expectString,
+    getProperty,
+    withOptionalProperty,
+} from "./helpers";
 import { validatePosition } from "./position";
 
 export function validatePendingPlayer(p: any): PendingPlayer {
@@ -7,11 +12,11 @@ export function validatePendingPlayer(p: any): PendingPlayer {
         return null;
     } else if (typeof p === "object") {
         const pp = p as Exclude<PendingPlayer, null>;
-        const pos = getPropertyOr(pp, "position", "string", undefined);
+
         return {
-            name: getPropertyOr(pp, "name", "string", undefined),
-            ready: getProperty(pp, "ready", "boolean"),
-            position: pos === undefined ? pos : validatePosition(pos),
+            ...withOptionalProperty(pp, "name", expectString),
+            ...withOptionalProperty(pp, "position", validatePosition),
+            ready: getProperty(pp, "ready", expectBoolean),
         };
     } else {
         throw new Error("Invalid pending player");

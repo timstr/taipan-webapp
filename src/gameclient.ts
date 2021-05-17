@@ -31,8 +31,8 @@ export type JoinedGameHandler = (gameState: GameStateView) => void;
 export type CouldntJoinGameHandler = (reason: JoinFailureReason) => void;
 
 export class GameClient {
-    constructor(host: string) {
-        this.socket = new SocketClient(host);
+    constructor(hostname: string, secure: boolean) {
+        this.socket = new SocketClient(hostname, secure);
 
         this.gameStateViewChanged = new Emitter();
         this.onConnect = new Emitter();

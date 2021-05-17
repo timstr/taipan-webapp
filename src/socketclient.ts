@@ -6,10 +6,10 @@ export type SocketErrorHandler = () => void;
 export type SocketMessageHandler = (message: string) => void;
 
 export class SocketClient {
-    constructor(hostname: string) {
-        this.hostname = hostname;
-        this.secure = true;
-        this.ws = this.makeWebsocket(`wss://${this.hostname}`);
+    constructor(hostname: string, secure: boolean) {
+        const protocol = secure ? "wss" : "ws";
+        const url = `${protocol}://${hostname}`;
+        this.ws = this.makeWebsocket(url);
 
         this.open = new Emitter();
         this.closed = new Emitter();
@@ -27,8 +27,6 @@ export class SocketClient {
     }
 
     private ws: WebSocket;
-    private hostname: string;
-    private secure: boolean;
 
     private onOpenHandler = (_: Event) => {
         this.open.emit();
@@ -39,16 +37,7 @@ export class SocketClient {
     };
 
     private onErrorHandler = (_: Event) => {
-        if (this.secure) {
-            console.log(
-                `NOTE: secure websocket server not found, falling back to non-secure websocket server.`
-            );
-            this.secure = false;
-            this.ws.close();
-            this.ws = this.makeWebsocket(`ws://${this.hostname}`);
-        } else {
-            this.error.emit();
-        }
+        this.error.emit();
     };
 
     private onMessageHandler = (e: MessageEvent) => {

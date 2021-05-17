@@ -26,18 +26,27 @@ export function updateJoinPhase(
 
     switch (action.type) {
         case PLAYER_JOINED: {
+            console.log(`Player ${whichPlayer} has joined the game.`);
             return {
                 ...oldState,
                 players: mapPlayers(replace(whichPlayer, { ready: false })),
             };
         }
         case PLAYER_DISCONNECTED: {
+            console.log(
+                `Player ${whichPlayer} has disconnected and is being removed from the game.`
+            );
             return {
                 ...oldState,
                 players: mapPlayers(replace(whichPlayer, null)),
             };
         }
         case PLAYER_CHOSE_NAME: {
+            console.log(
+                `Player ${whichPlayer} has changed their name to ${JSON.stringify(
+                    action.payload.name
+                )}`
+            );
             return {
                 ...oldState,
                 players: mapPlayers(
@@ -47,6 +56,9 @@ export function updateJoinPhase(
             };
         }
         case PLAYER_CHOSE_POSITION: {
+            console.log(
+                `Player ${whichPlayer} has chosen to play ${action.payload.position}`
+            );
             return {
                 ...oldState,
                 players: mapPlayers(
@@ -65,8 +77,14 @@ export function updateJoinPhase(
                 players: mapPlayers(replaceKey(whichPlayer, "ready", true)),
             };
             if (newState.players.every((p) => p?.ready === true)) {
+                console.log(
+                    `Player ${whichPlayer} is ready. All players are now ready and the game is advancing to the deal phase.`
+                );
                 return upgradeToDealPhase(newState);
             }
+            console.log(
+                `Player ${whichPlayer} is ready. Other players are not yet ready.`
+            );
             return newState;
         }
     }

@@ -26,7 +26,8 @@ export const JoinFailedBecauseFull = "GameFull";
 export type JoinFailedBecauseFull = typeof JoinFailedBecauseFull;
 
 export const JoinFailedBecauseWrongPassword = "WrongPassword";
-export type JoinFailedBecauseWrongPassword = typeof JoinFailedBecauseWrongPassword;
+export type JoinFailedBecauseWrongPassword =
+    typeof JoinFailedBecauseWrongPassword;
 
 export const JoinFailedBecauseBanned = "Banned";
 export type JoinFailedBecauseBanned = typeof JoinFailedBecauseBanned;

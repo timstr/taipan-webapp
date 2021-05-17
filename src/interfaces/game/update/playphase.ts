@@ -141,6 +141,7 @@ export function updatePlayPhase(
                 ...oldState,
                 currentTrick: pushDoubleStack(oldState.currentTrick, {
                     cards: [action.payload.card],
+                    player,
                 }),
                 players: mapPlayers(
                     replaceKey(
@@ -167,10 +168,10 @@ export function updatePlayPhase(
                 cardBelongsTo(card, you.staged);
             return {
                 ...oldState,
-                currentTrick: pushDoubleStack(
-                    oldState.currentTrick,
-                    you.staged
-                ),
+                currentTrick: pushDoubleStack(oldState.currentTrick, {
+                    cards: you.staged.cards,
+                    player,
+                }),
                 players: mapPlayers(
                     replaceKey(
                         player,

@@ -38,13 +38,13 @@ export function updatePassPhase(
         case CHOOSE_CARD_TO_PASS: {
             const theCard = action.payload.card;
             if (theCard && !cardBelongsTo(theCard, you.inHand)) {
-                throw new Error(
-                    `Player ${player}, "${
-                        you.profile.name
-                    }", tried to pass the card ${JSON.stringify(
-                        theCard
-                    )}, which they do not have`
-                );
+                const msg = `Player ${player}, "${
+                    you.profile.name
+                }", tried to pass the card ${JSON.stringify(
+                    theCard
+                )}, which they do not have`;
+                console.log(msg);
+                throw new Error(msg);
             }
 
             const whichKey = posToPassMapping[action.payload.position];

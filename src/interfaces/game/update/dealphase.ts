@@ -21,8 +21,14 @@ export function updateDealPhase(
                 ),
             };
             if (newState.players.every((p) => p.tookSecondDeal)) {
+                console.log(
+                    `Player ${whichPlayer} has taken their second deal. All players have taken their cards and the game is advancing to pass phase.`
+                );
                 return upgradeToPassPhase(newState);
             }
+            console.log(
+                `Player ${whichPlayer} has taken their second deal. Other players must still take their cards.`
+            );
             return newState;
     }
 }

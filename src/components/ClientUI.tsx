@@ -27,7 +27,8 @@ import { KickWarningUI } from "./modal/KickWarningUI";
 import { YouWereKickedUI } from "./modal/YouWereKickedUI";
 import { YouAreBannedUI } from "./modal/YouAreBannedUI";
 
-const HOSTNAME = `${window.location.host}`;
+const HOSTNAME = window.location.host;
+const IS_SECURE = window.location.protocol === "https:";
 
 interface Props {}
 
@@ -59,7 +60,7 @@ export class ClientUI extends React.Component<Props, State> {
             modalState: null,
         };
 
-        this.client = new GameClient(HOSTNAME);
+        this.client = new GameClient(HOSTNAME, IS_SECURE);
 
         this.client.onConnect.addListener(this.onConnectHandler);
         this.client.onDisconnect.addListener(this.onDisconnectHandler);

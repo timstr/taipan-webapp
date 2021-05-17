@@ -21,6 +21,9 @@ import {
     getNullableProperty,
     getProperty,
     expectObject,
+    expectString,
+    expectBoolean,
+    expectNumber,
 } from "../helpers";
 import { validateNullablePosition } from "../position";
 import { mapAllPlayers, mapOtherPlayers } from "../../game/player/player";
@@ -56,10 +59,10 @@ export function validateJoinPhaseView(x: any): JoinPhaseView {
     return {
         view: PlayerViewTag,
         phase: JoinPhaseTag,
-        yourName: getNullableProperty(sv, "yourName", "string"),
+        yourName: getNullableProperty(sv, "yourName", expectString),
         yourPosition: validateNullablePosition(sv.yourPosition),
-        youAreReady: getProperty(sv, "youAreReady", "boolean"),
-        playersJoined: getProperty(sv, "playersJoined", "number"),
+        youAreReady: getProperty(sv, "youAreReady", expectBoolean),
+        playersJoined: getProperty(sv, "playersJoined", expectNumber),
         players: mapAllPlayers(pp, validatePendingPlayer),
     };
 }
@@ -71,14 +74,14 @@ export function validateDealPhaseView(x: any): DealPhaseView {
     const others = getProperty(
         sv,
         "others",
-        "object"
+        expectObject
     ) as DealPhaseView["others"];
 
     return {
         view: PlayerViewTag,
         phase: DealPhaseTag,
         you: validatePlayerProfile(sv.you),
-        cardsRemaining: getProperty(sv, "cardsRemaining", "number"),
+        cardsRemaining: getProperty(sv, "cardsRemaining", expectNumber),
         yourHand: validateCardStack(sv.yourHand),
         others: mapOtherPlayers(others, validateDealPhasePlayerView),
     };
@@ -88,12 +91,16 @@ export function validatePassPhaseView(x: any): PassPhaseView {
     const sv = expectObject(x) as PassPhaseView;
     assertStateViewTag(sv);
     assertPhaseTag(sv, PassPhaseTag);
-    const yh = getProperty(sv, "you", "object") as PassPhasePlayer;
-    const yhg = getProperty(yh, "give", "object") as PassPhasePlayer["give"];
+    const yh = getProperty(sv, "you", expectObject) as PassPhasePlayer;
+    const yhg = getProperty(
+        yh,
+        "give",
+        expectObject
+    ) as PassPhasePlayer["give"];
     const others = getProperty(
         sv,
         "others",
-        "object"
+        expectObject
     ) as PassPhaseView["others"];
 
     return {
@@ -103,7 +110,7 @@ export function validatePassPhaseView(x: any): PassPhaseView {
             profile: validatePlayerProfile(yh.profile),
             inHand: getCardStack(yh, "inHand"),
             give: mapOtherPlayers(yhg, validateNullableCard),
-            ready: getProperty(yh, "ready", "boolean"),
+            ready: getProperty(yh, "ready", expectBoolean),
         },
         others: mapOtherPlayers(others, validatePassPhasePlayerView),
     };
@@ -113,12 +120,12 @@ export function validatePlayPhaseView(x: any): PlayPhaseView {
     const sv = expectObject(x) as PlayPhaseView;
     assertStateViewTag(sv);
     assertPhaseTag(sv, PlayPhaseTag);
-    const yh = getProperty(sv, "you", "object") as PlayPhasePlayer;
+    const yh = getProperty(sv, "you", expectObject) as PlayPhasePlayer;
 
     const others = getProperty(
         sv,
         "others",
-        "object"
+        expectObject
     ) as PassPhaseView["others"];
 
     return {
@@ -143,13 +150,23 @@ export function validateScorePhaseView(x: any): ScorePhaseView {
     const others = getProperty(
         sv,
         "others",
-        "object"
+        expectObject
     ) as ScorePhaseView["others"];
+
+    const you = getProperty(sv, "you", expectObject) as ScorePhaseView["you"];
 
     return {
         view: PlayerViewTag,
         phase: ScorePhaseTag,
-        you: validateScorePhasePlayer(sv.you),
+        you: {
+            profile: getProperty(you, "profile", validatePlayerProfile),
+            cards: getProperty(you, "cards", validateCardStack),
+            readyToPlayAgain: getProperty(
+                you,
+                "readyToPlayAgain",
+                expectBoolean
+            ),
+        },
         others: mapOtherPlayers(others, validateScorePhasePlayer),
     };
 }
@@ -157,7 +174,7 @@ export function validateScorePhaseView(x: any): ScorePhaseView {
 export function validateGameStateView(x: any): GameStateView {
     const sv = ((): GameStateView => {
         const obj = expectObject(x) as GameStateView;
-        const phase = getProperty(obj, "phase", "string");
+        const phase = getProperty(obj, "phase", expectString);
         switch (phase as GamePhase) {
             case JoinPhaseTag:
                 return validateJoinPhaseView(obj);

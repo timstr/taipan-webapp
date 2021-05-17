@@ -1,4 +1,6 @@
 import { clone } from "./clone";
+import { PlayerIndex } from "./game/player/player";
+import { hasOwnProperty } from "../typeutils";
 
 export type CardSuite = "Red" | "Green" | "Blue" | "Black";
 export const AllCardSuites: CardSuite[] = ["Red", "Green", "Blue", "Black"];
@@ -19,9 +21,9 @@ export const AllNumberCards: NumberCard[] = [
 ];
 
 export type CardValue = FaceCard | NumberCard;
-export const AllCardValues: CardValue[] = (AllNumberCards as CardValue[]).concat(
-    AllFaceCards
-);
+export const AllCardValues: CardValue[] = (
+    AllNumberCards as CardValue[]
+).concat(AllFaceCards);
 
 export interface NormalCard {
     readonly suite: CardSuite;
@@ -67,10 +69,15 @@ export interface CardStack {
     readonly cards: ReadonlyArray<Card>;
 }
 
+export interface PlayerCardStack {
+    readonly cards: ReadonlyArray<Card>;
+    readonly player: PlayerIndex;
+}
+
 // Stack of stacks of cards
 // To be used instead of Card[][]
 export interface CardDoubleStack {
-    readonly stacks: ReadonlyArray<CardStack>;
+    readonly stacks: ReadonlyArray<PlayerCardStack>;
 }
 
 // Stack of stacks of stacks of cards
@@ -120,18 +127,19 @@ export const compareCards = (a: Card, b: Card): number => {
     }
 };
 
-export const sortCards = (stack: CardStack): CardStack => {
+export const sortCards = <S extends CardStack>(stack: S): S => {
     const cloned = clone(stack.cards);
-    return { cards: cloned.sort(compareCards) };
+    return { ...stack, cards: cloned.sort(compareCards) };
 };
 
-export const pushStack = (stack: CardStack, newCard: Card): CardStack => ({
+export const pushStack = <S extends CardStack>(stack: S, newCard: Card): S => ({
+    ...stack,
     cards: stack.cards.concat([newCard]),
 });
 
 export const pushDoubleStack = (
     stackStack: CardDoubleStack,
-    newStack: CardStack
+    newStack: PlayerCardStack
 ): CardDoubleStack => ({
     stacks: stackStack.stacks.concat([newStack]),
 });
@@ -143,12 +151,15 @@ export const pushTripleStack = (
     stackStacks: stackStackStack.stackStacks.concat([newStackStack]),
 });
 
-export const popStack = (stack: CardStack): [CardStack, Card] => {
+export const popStack = <S extends CardStack>(stack: S): [S, Card] => {
     const n = stack.cards.length;
     if (n === 0) {
         throw new Error("Attempted to pop empty stack");
     }
-    return [{ cards: stack.cards.slice(0, n - 1) }, stack.cards[n - 1]];
+    return [
+        { ...stack, cards: stack.cards.slice(0, n - 1) },
+        stack.cards[n - 1],
+    ];
 };
 
 export const popDoubleStack = (
@@ -177,17 +188,32 @@ export const popTripleStack = (
     ];
 };
 
-export const concatStacks = (a: CardStack, b: CardStack): CardStack => ({
-    cards: a.cards.concat(b.cards),
-});
-export const concatDoubleStacks = (a: CardStack, b: CardStack): CardStack => ({
-    cards: a.cards.concat(b.cards),
-});
+export function concatStacks(a: CardStack, b: CardStack): CardStack;
+export function concatStacks(
+    a: PlayerCardStack,
+    b: PlayerCardStack
+): PlayerCardStack;
+export function concatStacks(
+    a: CardStack | PlayerCardStack,
+    b: CardStack | PlayerCardStack
+): CardStack | PlayerCardStack {
+    if (hasOwnProperty(a, "player")) {
+        let pcs: PlayerCardStack = {
+            cards: a.cards.concat(b.cards),
+            player: a.player,
+        };
+        return pcs;
+    }
+    return {
+        cards: a.cards.concat(b.cards),
+    };
+}
 
-export const filterCards = (
-    stack: CardStack,
+export const filterCards = <S extends CardStack>(
+    stack: S,
     predicate: (c: Card) => boolean
-): CardStack => ({
+): S => ({
+    ...stack,
     cards: stack.cards.filter(predicate),
 });
 

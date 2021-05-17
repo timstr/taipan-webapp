@@ -205,10 +205,16 @@ export function viewPassPhase(
     state: PassPhaseState,
     you: PlayerIndex
 ): PassPhaseView {
+    const y = state.players[you];
     return {
         view: PlayerViewTag,
         phase: PassPhaseTag,
-        you: state.players[you],
+        you: {
+            profile: y.profile,
+            give: y.give,
+            inHand: y.inHand,
+            ready: y.ready,
+        },
         others: allPlayersToOtherPlayers(
             state.players,
             you,
@@ -221,11 +227,17 @@ export function viewPlayPhase(
     state: PlayPhaseState,
     you: PlayerIndex
 ): PlayPhaseView {
+    const y = state.players[you];
     return {
         view: PlayerViewTag,
         phase: PlayPhaseTag,
         currentTrick: state.currentTrick,
-        you: state.players[you],
+        you: {
+            profile: y.profile,
+            inHand: y.inHand,
+            staged: y.staged,
+            tricksWon: y.tricksWon,
+        },
         others: allPlayersToOtherPlayers(
             state.players,
             you,
@@ -238,10 +250,15 @@ export function viewScorePhase(
     state: ScorePhaseState,
     you: PlayerIndex
 ): ScorePhaseView {
+    const y = state.players[you];
     return {
         view: PlayerViewTag,
         phase: ScorePhaseTag,
-        you: state.players[you],
+        you: {
+            profile: y.profile,
+            cards: y.cards,
+            readyToPlayAgain: y.readyToPlayAgain,
+        },
         others: allPlayersToOtherPlayers(state.players, you, (x) => x),
     };
 }

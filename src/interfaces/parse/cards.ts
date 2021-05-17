@@ -11,9 +11,11 @@ import {
     flattenDoubleStack,
     CardTripleStack,
     flattenTripleStack,
+    PlayerCardStack,
 } from "../cards";
-import { expectArray, expectObject } from "./helpers";
+import { expectArray, expectObject, getProperty } from "./helpers";
 import { KeyMustBe } from "../../typeutils";
+import { validatePlayerIndex } from "./player";
 
 export function validateCardSuite(v: any): CardSuite {
     if (typeof v === "string") {
@@ -84,9 +86,17 @@ export const validateCardStack = (o: any): CardStack => {
     return stack;
 };
 
+export const validatePlayerCardStack = (o: any): PlayerCardStack => {
+    const stack = validateCardStack(o);
+    const player = validatePlayerIndex(
+        (expectObject(o) as PlayerCardStack).player
+    );
+    return { ...stack, player };
+};
+
 export const validateCardDoubleStack = (o: any): CardDoubleStack => {
     const arr = expectArray((expectObject(o) as CardDoubleStack).stacks);
-    const stacks = arr.map(validateCardStack);
+    const stacks = arr.map(validatePlayerCardStack);
     const stackStack: CardDoubleStack = { stacks };
     if (anyDuplicateCards(flattenDoubleStack(stackStack))) {
         throw new Error(
@@ -115,6 +125,20 @@ export function getCardStack<O extends object, K extends keyof O>(
     key: KeyMustBe<O, K, CardStack>
 ): CardStack {
     return validateCardStack((obj as any)[key]);
+}
+export function getPlayerCardStack<O extends object, K extends keyof O>(
+    obj: O,
+    key: KeyMustBe<O, K, CardStack>
+): PlayerCardStack {
+    const s = (obj as any)[key];
+    return {
+        ...validateCardStack(s),
+        player: getProperty(
+            s as PlayerCardStack,
+            "player",
+            validatePlayerIndex
+        ),
+    };
 }
 export function getCardDoubleStack<O extends object, K extends keyof O>(
     obj: O,

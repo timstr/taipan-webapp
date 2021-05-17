@@ -13,7 +13,12 @@ import {
     playerDisconnectedAction,
     PLAYER_DISCONNECTED,
 } from "../game/actions/joinphase";
-import { getProperty, expectObject, getPropertyOr } from "./helpers";
+import {
+    getProperty,
+    expectObject,
+    expectString,
+    getOptionalProperty,
+} from "./helpers";
 import { PayloadType } from "../game/actions/createaction";
 import { validateNullablePosition, validateRelativePosition } from "./position";
 import {
@@ -79,7 +84,7 @@ export function validateJoinPhaseAction(
                     getProperty(
                         payload as PayloadType<PlayerChoseNameAction>,
                         "name",
-                        "string"
+                        expectString
                     )
                 );
             case PLAYER_CHOSE_POSITION: {
@@ -219,15 +224,14 @@ export function validateAction(obj: any): Action {
     }
 
     try {
-        const type = getProperty(obj as Action, "type", "string");
+        const type = getProperty(obj as Action, "type", expectString);
 
-        const phase = getProperty(obj as Action, "phase", "string");
+        const phase = getProperty(obj as Action, "phase", expectString);
 
-        const payload = getPropertyOr(
+        const payload = getOptionalProperty(
             obj as Action,
             "payload",
-            "object",
-            undefined
+            expectObject
         );
 
         return validateActionFromParts(type, phase, payload);

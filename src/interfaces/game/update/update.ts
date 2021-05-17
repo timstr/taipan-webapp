@@ -64,6 +64,9 @@ const updateGameStateImpl = (
 ): GameState => {
     if (action.type === PLAYER_DISCONNECTED) {
         if (oldState.phase === JoinPhaseTag) {
+            console.log(
+                `Player ${action.player} disconnected during join phase and their position is being immediately re-opened for new players.`
+            );
             // If a player disconnects during join phase, they are simply
             // removed and their position opens up immediately for others.
             const newPlayers = mapAllPlayers(oldState.players, (p, i) =>
@@ -88,43 +91,72 @@ const updateGameStateImpl = (
             }
 
             if (numStillConnected === 0) {
+                console.log(
+                    `All players have disconnected during gameplay, the game is being reset.`
+                );
                 return DefaultGameState;
             }
 
+            console.log(
+                `Player ${action.player} has disconnected during gameplay. The game is continuing and their position is being held in case they return.`
+            );
             return newState;
         }
     }
     if (action.type === PLAYER_JOINED && oldState.phase !== JoinPhaseTag) {
         const newState = reconnectPlayers(oldState, action.player, true);
+        console.log(
+            `Player ${action.player} has reconnected and is resuming the game.`
+        );
         return newState;
     }
     switch (oldState.phase) {
         case JoinPhaseTag: {
             if (action.phase !== JoinPhaseTag) {
-                throw new Error("Phase mismatch between action and state");
+                throw new Error(
+                    `Phase mismatch between action and state. Expected ${JoinPhaseTag}, got ${
+                        action.phase
+                    } instead. Action: ${JSON.stringify(action)}`
+                );
             }
             return updateJoinPhase(oldState, action.player, action);
         }
         case DealPhaseTag:
             if (action.phase !== DealPhaseTag) {
-                throw new Error("Phase mismatch between action and state");
+                throw new Error(
+                    `Phase mismatch between action and state. Expected ${DealPhaseTag}, got ${
+                        action.phase
+                    } instead. Action: ${JSON.stringify(action)}`
+                );
             }
             return updateDealPhase(oldState, action.player, action);
         case PassPhaseTag: {
             if (action.phase !== PassPhaseTag) {
-                throw new Error("Phase mismatch between action and state");
+                throw new Error(
+                    `Phase mismatch between action and state. Expected ${PassPhaseTag}, got ${
+                        action.phase
+                    } instead. Action: ${JSON.stringify(action)}`
+                );
             }
             return updatePassPhase(oldState, action.player, action);
         }
         case PlayPhaseTag: {
             if (action.phase !== PlayPhaseTag) {
-                throw new Error("Phase mismatch between action and state");
+                throw new Error(
+                    `Phase mismatch between action and state. Expected ${PlayPhaseTag}, got ${
+                        action.phase
+                    } instead. Action: ${JSON.stringify(action)}`
+                );
             }
             return updatePlayPhase(oldState, action.player, action);
         }
         case ScorePhaseTag: {
             if (action.phase !== ScorePhaseTag) {
-                throw new Error("Phase mismatch between action and state");
+                throw new Error(
+                    `Phase mismatch between action and state. Expected ${ScorePhaseTag}, got ${
+                        action.phase
+                    } instead. Action: ${JSON.stringify(action)}`
+                );
             }
             return updateScorePhase(oldState, action.player, action);
         }
