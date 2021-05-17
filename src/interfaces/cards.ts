@@ -59,6 +59,14 @@ export const AllCards: CardStack = {
 };
 export const DeckSize = 56;
 
+export const isNormalCard = (c: Card): c is NormalCard => {
+    return typeof c === "object";
+};
+
+export const isSpecialCard = (c: Card): c is SpecialCard => {
+    return typeof c === "string";
+};
+
 // NOTE: yes, the following interfaces seem unnecessary, but there appear
 // to be corner cases where TypeScript can't detect that a Card[][] is being
 // passed where a Card[] is expected. These interfaces are safer workaround.
@@ -277,6 +285,28 @@ export const countDoubleStack = (stack: CardDoubleStack): number =>
 export const countTripleStack = (stack: CardTripleStack): number =>
     stack.stackStacks.reduce((acc, v) => acc + countDoubleStack(v), 0);
 
+export const stacksAreEqual = (
+    stackA: CardStack,
+    stackB: CardStack
+): boolean => {
+    if (stackA.cards.length !== stackB.cards.length) {
+        return false;
+    }
+    let mask = stackB.cards.map((_) => false);
+    for (let i = 0; i < stackA.cards.length; ++i) {
+        for (let j = 0; j < stackB.cards.length; ++j) {
+            if (mask[j]) {
+                continue;
+            }
+            if (cardsAreEqual(stackA.cards[i], stackB.cards[j])) {
+                mask[j] = true;
+                break;
+            }
+        }
+    }
+    return mask.reduce((a, b) => a && b, true);
+};
+
 export const anyDuplicateCards = (stack: CardStack) => {
     const n = countStack(stack);
     for (let i = 0; i < n; ++i) {
@@ -321,4 +351,53 @@ export const dealCards = (): [CardStack, CardStack, CardStack, CardStack] => {
         { cards: cards.slice(28, 42) },
         { cards: cards.slice(42, 56) },
     ];
+};
+
+export const isBomb = (stack: CardStack): boolean => {
+    if (anyDuplicateCards(stack)) {
+        return false;
+    }
+    const num = countStack(stack);
+    if (num === 4) {
+        let [c0, c1, c2, c3] = stack.cards;
+        if (
+            !(
+                isNormalCard(c0) &&
+                isNormalCard(c1) &&
+                isNormalCard(c2) &&
+                isNormalCard(c3)
+            )
+        ) {
+            return false;
+        }
+        const v = c0.value;
+        if (!(c1.value === v && c2.value === v && c3.value === v)) {
+            return false;
+        }
+        return true;
+    } else if (num >= 5) {
+        let s = undefined;
+        let mask = AllCardValues.map((_) => false);
+        for (let c of stack.cards) {
+            if (!isNormalCard(c)) {
+                return false;
+            }
+            if (s === undefined) {
+                s = c.suite;
+            } else if (c.suite !== s) {
+                return false;
+            }
+            const i = AllCardValues.indexOf(c.value);
+            mask[i] = true;
+        }
+
+        const i0 = mask.indexOf(true);
+        for (let i = i0; i < num; ++i) {
+            if (!mask[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
 };

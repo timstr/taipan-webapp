@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-    GameStateView,
     DefaultGameStateView,
     PlayerViewTag,
 } from "../interfaces/game/view/stateview";
@@ -8,10 +7,7 @@ import { GameClient } from "../gameclient";
 import { MessageContext } from "./MessageContext";
 import { MainContent } from "./MainContent";
 import { ClientMessage } from "../interfaces/messages/clientmessages";
-import {
-    GameStateSpectatorView,
-    SpectatorViewTag,
-} from "../interfaces/game/view/spectatorview";
+import { SpectatorViewTag } from "../interfaces/game/view/spectatorview";
 import { PlayerUI } from "./player/PlayerUI";
 import { SpectatorUI } from "./spectator/SpectatorUI";
 import {
@@ -26,6 +22,10 @@ import { GameIsFullUI } from "./modal/GameIsFullUI";
 import { KickWarningUI } from "./modal/KickWarningUI";
 import { YouWereKickedUI } from "./modal/YouWereKickedUI";
 import { YouAreBannedUI } from "./modal/YouAreBannedUI";
+import {
+    ViewOfGame,
+    aBombWasJustPlayed,
+} from "../interfaces/game/view/viewofgame";
 
 const HOSTNAME = window.location.host;
 const IS_SECURE = window.location.protocol === "https:";
@@ -42,12 +42,11 @@ type ModalUIState =
 
 type ConnectionStatus = "Loading" | "Connected" | "Disconnected";
 
-type ViewOfGame = GameStateView | GameStateSpectatorView;
-
 interface State {
     readonly gameState: ViewOfGame;
     readonly connection: ConnectionStatus;
     readonly modalState: ModalUIState | null;
+    readonly explosionProgress: number | null;
 }
 
 export class ClientUI extends React.Component<Props, State> {
@@ -58,6 +57,7 @@ export class ClientUI extends React.Component<Props, State> {
             gameState: DefaultGameStateView,
             connection: "Loading",
             modalState: null,
+            explosionProgress: null,
         };
 
         this.client = new GameClient(HOSTNAME, IS_SECURE);
@@ -81,6 +81,9 @@ export class ClientUI extends React.Component<Props, State> {
     private client: GameClient;
 
     private onUpdateState = (newState: ViewOfGame) => {
+        if (aBombWasJustPlayed(this.state.gameState, newState)) {
+            this.startExplosion();
+        }
         this.setState({ gameState: newState });
     };
 
@@ -104,6 +107,20 @@ export class ClientUI extends React.Component<Props, State> {
             case JoinFailedBecauseBanned:
                 this.setState({ modalState: "YouAreBanned" });
                 return;
+        }
+    };
+
+    private startExplosion = () => {
+        this.setState({ explosionProgress: null });
+        requestAnimationFrame(this.updateExplosion);
+    };
+
+    private updateExplosion = () => {
+        const p = this.state.explosionProgress;
+        const newP = p === null ? 0.0 : p + 0.05;
+        this.setState({ explosionProgress: newP });
+        if (newP < 1.0) {
+            requestAnimationFrame(this.updateExplosion);
         }
     };
 
@@ -149,6 +166,14 @@ export class ClientUI extends React.Component<Props, State> {
         }
     }
 
+    private randomShakeOffset(progress: number | null): number {
+        if (progress === null) {
+            return 0.0;
+        }
+        const mag = 50.0 * Math.exp(-5.0 * progress);
+        return mag * (-1.0 + 2.0 * Math.random());
+    }
+
     private renderUIPhase() {
         const s = this.state.gameState;
         if (this.state.connection === "Loading") {
@@ -172,14 +197,18 @@ export class ClientUI extends React.Component<Props, State> {
                 </MainContent>
             );
         }
+        const dx = this.randomShakeOffset(this.state.explosionProgress);
+        const dy = this.randomShakeOffset(this.state.explosionProgress);
         switch (s.view) {
             case PlayerViewTag:
-                return <PlayerUI state={s} />;
+                return <PlayerUI state={s} offsetX={dx} offsetY={dy} />;
             case SpectatorViewTag:
                 return (
                     <SpectatorUI
                         state={s}
                         requestJoin={this.showEnterPassword}
+                        offsetX={dx}
+                        offsetY={dy}
                     />
                 );
         }

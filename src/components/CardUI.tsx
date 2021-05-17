@@ -5,6 +5,8 @@ import {
     CardStack,
     CardDoubleStack,
 } from "../interfaces/cards";
+import { AllPlayers, PlayerProfile } from "../interfaces/game/player/player";
+import { DefinitelyConnected } from "../interfaces/game/view/stateview";
 
 export type FlippableCard = Card | "Backside";
 
@@ -193,6 +195,7 @@ interface RowsOfCardsProps {
     readonly stacks: CardDoubleStack;
     readonly size: CardSize;
     readonly rowStyle: CardPileType;
+    readonly namesToShow: AllPlayers<DefinitelyConnected<PlayerProfile>>;
 }
 
 export const RowsOfCards = (props: RowsOfCardsProps) => {
@@ -214,6 +217,11 @@ export const RowsOfCards = (props: RowsOfCardsProps) => {
                         type={props.rowStyle}
                         jitter={i}
                     />
+                    {props.namesToShow !== undefined ? (
+                        <span className="trick-player-name">
+                            {props.namesToShow[cc.player].name}
+                        </span>
+                    ) : null}
                 </div>
             ))}
         </div>

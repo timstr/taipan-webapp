@@ -10,6 +10,8 @@ type BackdropName =
 interface Props {
     readonly backdrop: BackdropName;
     readonly children: React.ReactNode;
+    readonly offsetX?: number;
+    readonly offsetY?: number;
 }
 
 const makeUrl = (name: BackdropName): string =>
@@ -20,7 +22,11 @@ const makeUrl = (name: BackdropName): string =>
 export const MainContent = (props: Props) => (
     <div
         className={"backdrop"}
-        style={{ backgroundImage: makeUrl(props.backdrop) }}
+        style={{
+            backgroundImage: makeUrl(props.backdrop),
+            top: props.offsetX,
+            left: props.offsetY,
+        }}
     >
         <div className="main-content">{props.children}</div>
     </div>

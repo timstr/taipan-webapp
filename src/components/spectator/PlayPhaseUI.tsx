@@ -8,12 +8,18 @@ import { OtherPlayerPlayingUI } from "../OtherPlayerPlayingUI";
 
 interface Props {
     readonly gameState: PlayPhaseSpectatorView;
+    readonly offsetX: number;
+    readonly offsetY: number;
 }
 
 export const PlayPhaseUI = (props: Props) => {
     const s = props.gameState;
     return (
-        <MainContent backdrop="floor">
+        <MainContent
+            backdrop="floor"
+            offsetX={props.offsetX}
+            offsetY={props.offsetY}
+        >
             <Header phase={PlayPhaseTag} />
             <div className="other-hands-play-phase">
                 <OtherPlayerPlayingUI
@@ -33,6 +39,7 @@ export const PlayPhaseUI = (props: Props) => {
                     stacks={s.currentTrick}
                     size="medium"
                     rowStyle="Overlapping"
+                    namesToShow={s.playerMapping}
                 />
             </div>
             <div className="other-hands-play-phase">

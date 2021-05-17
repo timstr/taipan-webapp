@@ -23,7 +23,11 @@ import {
     expectNumber,
     expectString,
 } from "../helpers";
-import { mapAllPlayers, mapSeatedPlayers } from "../../game/player/player";
+import {
+    mapAllPlayers,
+    mapSeatedPlayers,
+    PlayerProfile,
+} from "../../game/player/player";
 import { validatePendingPlayer } from "../playerstate";
 import { getCardDoubleStack } from "../cards";
 import {
@@ -32,6 +36,8 @@ import {
     validateScorePhasePlayer,
     validateDealPhasePlayerView,
 } from "./playerview";
+import { DefinitelyConnected } from "../../game/view/stateview";
+import { validatePosition } from "../position";
 
 const assertSpectatorViewTag = (obj: object) => {
     const sv = obj as GameStateSpectatorView;
@@ -94,11 +100,19 @@ export function validatePlayPhaseSpectatorView(x: any): PlayPhaseSpectatorView {
         "players",
         expectObject
     ) as PlayPhaseSpectatorView["players"];
+    const pm = getProperty(sv, "playerMapping", expectQuadruple);
     return {
         view: SpectatorViewTag,
         phase: PlayPhaseTag,
         currentTrick: getCardDoubleStack(sv, "currentTrick"),
         players: mapSeatedPlayers(pp, validatePlayPhasePlayerView),
+        playerMapping: mapAllPlayers(pm, (x) => {
+            const xx = expectObject(x) as DefinitelyConnected<PlayerProfile>;
+            return {
+                name: getProperty(xx, "name", expectString),
+                position: getProperty(xx, "position", validatePosition),
+            };
+        }),
     };
 }
 

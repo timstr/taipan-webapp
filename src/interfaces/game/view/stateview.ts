@@ -34,6 +34,7 @@ import {
     mapOtherPlayers,
     allPlayersToOtherPlayers,
     PlayerIndex,
+    mapAllPlayers,
 } from "../player/player";
 import { countNonNull } from "../../../util";
 
@@ -96,6 +97,7 @@ export interface PlayPhaseView {
     readonly currentTrick: CardDoubleStack;
     readonly you: DefinitelyConnected<PlayPhasePlayer>;
     readonly others: OtherPlayers<PlayPhasePlayerView>;
+    readonly playerMapping: AllPlayers<DefinitelyConnected<PlayerProfile>>;
 }
 
 export interface ScorePhaseView {
@@ -243,6 +245,10 @@ export function viewPlayPhase(
             you,
             viewPlayPhasePlayer
         ),
+        playerMapping: mapAllPlayers(state.players, (p) => ({
+            name: p.profile.name,
+            position: p.profile.position,
+        })),
     };
 }
 

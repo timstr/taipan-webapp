@@ -19,10 +19,8 @@ import {
     JoinFailureReason,
 } from "./interfaces/messages/servermessages";
 import { parseServerMessage } from "./interfaces/parse/messages";
-import { GameStateSpectatorView } from "./interfaces/game/view/spectatorview";
 import { SESSION_TOKEN_COOKIE_NAME } from "./sessiontoken";
-
-export type ViewOfGame = GameStateView | GameStateSpectatorView;
+import { ViewOfGame } from "./interfaces/game/view/viewofgame";
 
 export type ViewOfGameChangedHandler = (newState: ViewOfGame) => void;
 

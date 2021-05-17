@@ -102,7 +102,7 @@ h6 {
 }
 
 .backdrop {
-    position: sticky;
+    position: absolute;
     overflow: hidden;
     top: 0px;
     left: 0px;
@@ -412,4 +412,11 @@ h6 {
 }
 .disconnected-icon-inner {
     color: #202020;
+}
+
+.trick-player-name {
+    margin-left: 15px;
+    color: #000000;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.4);
 }

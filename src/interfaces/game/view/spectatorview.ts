@@ -18,6 +18,7 @@ import {
     viewPlayPhasePlayer,
     DealPhasePlayerView,
     viewDealPhasePlayer,
+    DefinitelyConnected,
 } from "./stateview";
 import { CardDoubleStack } from "../../cards";
 import { PendingPlayer, ScorePhasePlayer } from "../playerstate";
@@ -25,6 +26,8 @@ import {
     AllPlayers,
     SeatedPlayers,
     allPlayersToSeatedPlayers,
+    PlayerProfile,
+    mapAllPlayers,
 } from "../player/player";
 import { countNonNull } from "../../../util";
 
@@ -55,6 +58,7 @@ export interface PlayPhaseSpectatorView {
     readonly phase: PlayPhaseTag;
     readonly currentTrick: CardDoubleStack;
     readonly players: SeatedPlayers<PlayPhasePlayerView>;
+    readonly playerMapping: AllPlayers<DefinitelyConnected<PlayerProfile>>;
 }
 
 export interface ScorePhaseSpectatorView {
@@ -109,6 +113,10 @@ export function spectatePlayPhase(
         phase: PlayPhaseTag,
         players: allPlayersToSeatedPlayers(state.players, viewPlayPhasePlayer),
         currentTrick: state.currentTrick,
+        playerMapping: mapAllPlayers(state.players, (p) => ({
+            name: p.profile.name,
+            position: p.profile.position,
+        })),
     };
 }
 

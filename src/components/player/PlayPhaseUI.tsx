@@ -111,13 +111,19 @@ const PutTrickBackButton = () => (
 
 interface Props {
     readonly gameState: PlayPhaseView;
+    readonly offsetX: number;
+    readonly offsetY: number;
 }
 
 export const PlayPhaseUI = (props: Props) => {
     const s = props.gameState;
     const numCardsWon = countTripleStack(s.you.tricksWon);
     return (
-        <MainContent backdrop="floor">
+        <MainContent
+            backdrop="floor"
+            offsetX={props.offsetX}
+            offsetY={props.offsetY}
+        >
             <Header
                 name={s.you.profile.name}
                 phase={s.phase}
@@ -146,6 +152,7 @@ export const PlayPhaseUI = (props: Props) => {
                     stacks={s.currentTrick}
                     size="medium"
                     rowStyle="Overlapping"
+                    namesToShow={s.playerMapping}
                 />
                 {countDoubleStack(s.currentTrick) > 0 ? (
                     <>

@@ -15,6 +15,8 @@ import { DealPhaseUI } from "./DealPhaseUI";
 
 interface Props {
     readonly state: GameStateView;
+    readonly offsetX: number;
+    readonly offsetY: number;
 }
 
 export const PlayerUI = (props: Props) => {
@@ -27,7 +29,13 @@ export const PlayerUI = (props: Props) => {
         case PassPhaseTag:
             return <PassPhaseUI gameState={s} />;
         case PlayPhaseTag:
-            return <PlayPhaseUI gameState={s} />;
+            return (
+                <PlayPhaseUI
+                    gameState={s}
+                    offsetX={props.offsetX}
+                    offsetY={props.offsetY}
+                />
+            );
         case ScorePhaseTag:
             return <ScorePhaseUI gameState={s} />;
     }
