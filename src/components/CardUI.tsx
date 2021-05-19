@@ -198,32 +198,35 @@ interface RowsOfCardsProps {
     readonly namesToShow: AllPlayers<DefinitelyConnected<PlayerProfile>>;
 }
 
-export const RowsOfCards = (props: RowsOfCardsProps) => {
-    const vShift =
-        -CARD_BASE_MEASUREMENTS.VERTICAL_OVERLAP * cardScaleFactor(props.size);
-    return (
-        <div className="rows-of-cards">
-            {props.stacks.stacks.map((cc, i) => (
-                <div
-                    className="row-in-rows-of-cards"
-                    style={{
-                        marginBottom: i === 0 ? 0 : vShift,
-                        zIndex: i,
-                    }}
-                >
-                    <PileOfCards
-                        cards={cc}
-                        size={props.size}
-                        type={props.rowStyle}
-                        jitter={i}
-                    />
-                    {props.namesToShow !== undefined ? (
-                        <span className="trick-player-name">
-                            {props.namesToShow[cc.player].name}
-                        </span>
-                    ) : null}
-                </div>
-            ))}
-        </div>
-    );
-};
+export const RowsOfCards = React.forwardRef<HTMLDivElement, RowsOfCardsProps>(
+    (props, ref) => {
+        const vShift =
+            -CARD_BASE_MEASUREMENTS.VERTICAL_OVERLAP *
+            cardScaleFactor(props.size);
+        return (
+            <div className="rows-of-cards" ref={ref}>
+                {props.stacks.stacks.map((cc, i) => (
+                    <div
+                        className="row-in-rows-of-cards"
+                        style={{
+                            marginBottom: i === 0 ? 0 : vShift,
+                            zIndex: i,
+                        }}
+                    >
+                        <PileOfCards
+                            cards={cc}
+                            size={props.size}
+                            type={props.rowStyle}
+                            jitter={i}
+                        />
+                        {props.namesToShow !== undefined ? (
+                            <span className="trick-player-name">
+                                {props.namesToShow[cc.player].name}
+                            </span>
+                        ) : null}
+                    </div>
+                ))}
+            </div>
+        );
+    }
+);

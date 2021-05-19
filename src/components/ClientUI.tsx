@@ -26,6 +26,7 @@ import {
     ViewOfGame,
     aBombWasJustPlayed,
 } from "../interfaces/game/view/viewofgame";
+import { Explosion } from "./explosion";
 
 const HOSTNAME = window.location.host;
 const IS_SECURE = window.location.protocol === "https:";
@@ -47,6 +48,9 @@ interface State {
     readonly connection: ConnectionStatus;
     readonly modalState: ModalUIState | null;
     readonly explosionProgress: number | null;
+    readonly explosionSeed: number;
+    readonly explosionCenterX: number;
+    readonly explosionCenterY: number;
 }
 
 export class ClientUI extends React.Component<Props, State> {
@@ -58,6 +62,9 @@ export class ClientUI extends React.Component<Props, State> {
             connection: "Loading",
             modalState: null,
             explosionProgress: null,
+            explosionSeed: 0.0,
+            explosionCenterX: 0.0,
+            explosionCenterY: 0.0,
         };
 
         this.client = new GameClient(HOSTNAME, IS_SECURE);
@@ -68,7 +75,11 @@ export class ClientUI extends React.Component<Props, State> {
         this.client.onCouldntJoinGame.addListener(this.onJoinFailedHandler);
         this.client.onKickWarning.addListener(this.onKickWarningHandler);
         this.client.onKick.addListener(this.onKickHandler);
+
+        this.trickRef = React.createRef();
     }
+
+    trickRef: React.RefObject<HTMLDivElement>;
 
     componentDidMount() {
         this.client.gameStateViewChanged.addListener(this.onUpdateState);
@@ -111,17 +122,40 @@ export class ClientUI extends React.Component<Props, State> {
     };
 
     private startExplosion = () => {
-        this.setState({ explosionProgress: null });
+        this.setState({
+            explosionProgress: null,
+            explosionSeed: Math.random(),
+        });
+        this.updateExplosionCenter();
         requestAnimationFrame(this.updateExplosion);
     };
 
     private updateExplosion = () => {
         const p = this.state.explosionProgress;
-        const newP = p === null ? 0.0 : p + 0.05;
-        this.setState({ explosionProgress: newP });
+        const newP = p === null ? 0.0 : p + 0.02;
         if (newP < 1.0) {
+            this.setState({ explosionProgress: newP });
+            this.updateExplosionCenter();
             requestAnimationFrame(this.updateExplosion);
+        } else {
+            this.setState({ explosionProgress: null });
         }
+    };
+
+    private updateExplosionCenter = () => {
+        const [x, y] = (() => {
+            if (this.trickRef.current) {
+                const e = this.trickRef.current;
+                const vpo = e.getBoundingClientRect();
+                return [vpo.left + 0.5 * vpo.width, vpo.top + 0.5 * vpo.height];
+            }
+            return [0.0, 0.0];
+        })();
+
+        this.setState({
+            explosionCenterX: x,
+            explosionCenterY: y,
+        });
     };
 
     private onConnectHandler = () => {
@@ -170,7 +204,7 @@ export class ClientUI extends React.Component<Props, State> {
         if (progress === null) {
             return 0.0;
         }
-        const mag = 50.0 * Math.exp(-5.0 * progress);
+        const mag = 50.0 * Math.exp(-3.0 * progress);
         return mag * (-1.0 + 2.0 * Math.random());
     }
 
@@ -199,17 +233,47 @@ export class ClientUI extends React.Component<Props, State> {
         }
         const dx = this.randomShakeOffset(this.state.explosionProgress);
         const dy = this.randomShakeOffset(this.state.explosionProgress);
-        switch (s.view) {
-            case PlayerViewTag:
-                return <PlayerUI state={s} offsetX={dx} offsetY={dy} />;
-            case SpectatorViewTag:
+        const maybeExplosion = () => {
+            const t = this.state.explosionProgress;
+            if (t !== null) {
                 return (
-                    <SpectatorUI
-                        state={s}
-                        requestJoin={this.showEnterPassword}
+                    <Explosion
                         offsetX={dx}
                         offsetY={dy}
+                        progress={t}
+                        centerX={this.state.explosionCenterX} // TODO: center on trick
+                        centerY={this.state.explosionCenterY} // TODO: center on trick
+                        seed={this.state.explosionSeed}
+                        numParticles={15}
                     />
+                );
+            }
+            return null;
+        };
+        switch (s.view) {
+            case PlayerViewTag:
+                return (
+                    <>
+                        {maybeExplosion()}
+                        <PlayerUI
+                            state={s}
+                            offsetX={dx}
+                            offsetY={dy}
+                            ref={this.trickRef}
+                        />
+                    </>
+                );
+            case SpectatorViewTag:
+                return (
+                    <>
+                        {maybeExplosion()}
+                        <SpectatorUI
+                            state={s}
+                            requestJoin={this.showEnterPassword}
+                            offsetX={dx}
+                            offsetY={dy}
+                        />
+                    </>
                 );
         }
     }

@@ -115,87 +115,93 @@ interface Props {
     readonly offsetY: number;
 }
 
-export const PlayPhaseUI = (props: Props) => {
-    const s = props.gameState;
-    const numCardsWon = countTripleStack(s.you.tricksWon);
-    return (
-        <MainContent
-            backdrop="floor"
-            offsetX={props.offsetX}
-            offsetY={props.offsetY}
-        >
-            <Header
-                name={s.you.profile.name}
-                phase={s.phase}
-                position={s.you.profile.position}
-            />
-            <div className="other-hands-play-phase">
-                <OtherPlayerPlayingUI
-                    positionTitle="Left Opponent"
-                    player={s.others.leftOpponent}
-                    facing="Down"
+export const PlayPhaseUI = React.forwardRef<HTMLDivElement, Props>(
+    (props, ref) => {
+        const s = props.gameState;
+        const numCardsWon = countTripleStack(s.you.tricksWon);
+        return (
+            <MainContent
+                backdrop="floor"
+                offsetX={props.offsetX}
+                offsetY={props.offsetY}
+            >
+                <Header
+                    name={s.you.profile.name}
+                    phase={s.phase}
+                    position={s.you.profile.position}
                 />
-                <OtherPlayerPlayingUI
-                    positionTitle="Partner"
-                    player={s.others.partner}
-                    facing="Down"
-                />
-                <OtherPlayerPlayingUI
-                    positionTitle="Right Opponent"
-                    player={s.others.rightOpponent}
-                    facing="Down"
-                />
-            </div>
-            <div className="current-trick">
-                <h3>Current Trick</h3>
-                <RowsOfCards
-                    stacks={s.currentTrick}
-                    size="medium"
-                    rowStyle="Overlapping"
-                    namesToShow={s.playerMapping}
-                />
-                {countDoubleStack(s.currentTrick) > 0 ? (
-                    <>
-                        <br />
-                        <TakeTrickButton />
-                        <ReclaimLastPlayButton />
-                    </>
-                ) : null}
-            </div>
-            <div className="staging-area">
-                <h3>Staging Area</h3>
-                <div className="staging-area-cards">
-                    {s.you.staged.cards.map((c, i) => (
-                        <StagedCard key={i} card={c} />
-                    ))}
-                </div>
-                {countStack(s.you.staged) > 0 ? <PlayStagedButton /> : null}
-            </div>
-            <div className="your-hand-play-phase">
-                <h3>Your Hand</h3>
-                <div className="your-cards-play-phase">
-                    {s.you.inHand.cards.map((c, i) => (
-                        <div key={i} className="card-in-hand-play-phase-inner">
-                            <CardInHand
-                                card={c}
-                                isStaged={cardBelongsTo(c, s.you.staged)}
-                            />
-                        </div>
-                    ))}
-                </div>
-                <div className="tricks-youve-won">
-                    <h3>Tricks You've Won</h3>
-                    <PileOfCards
-                        cards={numCardsWon}
-                        type="Heap"
-                        size="medium"
+                <div className="other-hands-play-phase">
+                    <OtherPlayerPlayingUI
+                        positionTitle="Left Opponent"
+                        player={s.others.leftOpponent}
+                        facing="Down"
                     />
-                    {numCardsWon > 0 &&
-                    countDoubleStack(s.currentTrick) === 0 ? (
-                        <PutTrickBackButton />
+                    <OtherPlayerPlayingUI
+                        positionTitle="Partner"
+                        player={s.others.partner}
+                        facing="Down"
+                    />
+                    <OtherPlayerPlayingUI
+                        positionTitle="Right Opponent"
+                        player={s.others.rightOpponent}
+                        facing="Down"
+                    />
+                </div>
+                <div className="current-trick">
+                    <h3>Current Trick</h3>
+                    <RowsOfCards
+                        stacks={s.currentTrick}
+                        size="medium"
+                        rowStyle="Overlapping"
+                        namesToShow={s.playerMapping}
+                        ref={ref}
+                    />
+                    {countDoubleStack(s.currentTrick) > 0 ? (
+                        <>
+                            <br />
+                            <TakeTrickButton />
+                            <ReclaimLastPlayButton />
+                        </>
                     ) : null}
                 </div>
-            </div>
-        </MainContent>
-    );
-};
+                <div className="staging-area">
+                    <h3>Staging Area</h3>
+                    <div className="staging-area-cards">
+                        {s.you.staged.cards.map((c, i) => (
+                            <StagedCard key={i} card={c} />
+                        ))}
+                    </div>
+                    {countStack(s.you.staged) > 0 ? <PlayStagedButton /> : null}
+                </div>
+                <div className="your-hand-play-phase">
+                    <h3>Your Hand</h3>
+                    <div className="your-cards-play-phase">
+                        {s.you.inHand.cards.map((c, i) => (
+                            <div
+                                key={i}
+                                className="card-in-hand-play-phase-inner"
+                            >
+                                <CardInHand
+                                    card={c}
+                                    isStaged={cardBelongsTo(c, s.you.staged)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                    <div className="tricks-youve-won">
+                        <h3>Tricks You've Won</h3>
+                        <PileOfCards
+                            cards={numCardsWon}
+                            type="Heap"
+                            size="medium"
+                        />
+                        {numCardsWon > 0 &&
+                        countDoubleStack(s.currentTrick) === 0 ? (
+                            <PutTrickBackButton />
+                        ) : null}
+                    </div>
+                </div>
+            </MainContent>
+        );
+    }
+);

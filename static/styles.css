@@ -420,3 +420,13 @@ h6 {
     border-radius: 5px;
     background-color: rgba(255, 255, 255, 0.4);
 }
+.explosion-container {
+    z-index: 10000;
+    position: absolute;
+    overflow: hidden;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}

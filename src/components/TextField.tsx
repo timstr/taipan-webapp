@@ -16,10 +16,7 @@ export class TextField extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = { value: "" };
-        this.inputRef = React.createRef();
     }
-
-    private inputRef: React.Ref<HTMLInputElement>;
 
     private handleInput = (value: string) => {
         this.setState({ value });
@@ -37,7 +34,6 @@ export class TextField extends React.Component<Props, State> {
                 <input
                     type={this.props.isPassword ? "password" : "text"}
                     className="text-field"
-                    ref={this.inputRef}
                     value={this.state.value}
                     onChange={(e) => this.handleInput(e.target.value)}
                     placeholder={this.props.placeHolder}
