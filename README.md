@@ -21,11 +21,11 @@ from. To run the server, you'll then need to set a few environment variables:
 
 - `PUBLIC_ROOT` : the path to the folder whose where files are served by the HTTPS server.
   This is intended for the files placed into the `dist/public/` folder during build.
-- `SECRET_KEY_PATH` : the path to the key file for the HTTPS server. You can generate this
+- `SECRET_KEY_PATH` (not required if `--insecure` option is used) : the path to the key file for the HTTPS server. You can generate this
   using OpenSSL (self-signed, but browsers will hate you), or, if you have a domain name,
   you can easily get certification from [Let's Encrpyt](https://letsencrypt.org/) and
   get a key in the process.
-- `SECRET_CERT_PATH` : the path to the certificate file for the HTTPS server. See
+- `SECRET_CERT_PATH` (not required if `--insecure` option is used) : the path to the certificate file for the HTTPS server. See
   `SECRET_KEY_PATH` above for details; you'll generate this similarly.
 - `GAME_PASSWORD_PATH` (optional) : the path to a plaintext file containing the SHA256 digest
   of the password required to join the game. If this is not set, no password will be required
@@ -37,12 +37,8 @@ The files these environment variables point to (with the exception of `PUBLIC_RO
 be considered secret and carefully guarded. If HTTPS proves to be too complicated, you can
 simply modify the source code to use a single HTTP server instead.
 
-Finally, once the environment variables above are set, run `$ node main.js`, where `main.js` is taken
-from `dist/server/` after building. This will run an https server and websocket server
-on port 403 (the default for HTTPS), as well as an HTTP->HTTPS redirect server on port 80 (the
-default for HTTP). The redirect server simply upgrades traffic to use the secure protocol, and
-allows you to share links to the webapp more easily without worrying about the `https://` bit,
-since `http://` is typically assumed.
+Finally, once the environment variables above are set, run `$ node main.js` (or `$ node main.js --insecure` to use http instead of https, which is simpler for development but less safe), where `main.js` is taken
+from `dist/server/` after building. This will run an http server that can be visited at `http://localhost` if running on your local machine, or `http://yourdomainname.com` if running on a machine pointed to by a domain name that you own.
 
 ## What it's made of
 
