@@ -33,9 +33,9 @@ from. To run the server, you'll then need to set a few environment variables:
   You can create this file and choose a new password easily by running `$ node hashpassword.js`
   which is found in the `dist/util` path after building.
   
-The files these environment variables point to (with the exception of `PUBLIC_ROOT`) should all
-be considered secret and carefully guarded. If HTTPS proves to be too complicated, you can
-simply modify the source code to use a single HTTP server instead.
+The files that these environment variables point to (with the exception of `PUBLIC_ROOT`) should all
+be considered secret and carefully guarded. If HTTPS proves to be too complicated (e.g. during development), you can
+simply run the app with the `--insecure` option to use HTTP only.
 
 Finally, once the environment variables above are set, run `$ node main.js` (or `$ node main.js --insecure` to use http instead of https, which is simpler for development but less safe), where `main.js` is taken
 from `dist/server/` after building. This will run an http server that can be visited at `http://localhost` if running on your local machine, or `http://yourdomainname.com` if running on a machine pointed to by a domain name that you own.
