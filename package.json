@@ -17,7 +17,7 @@
         "react": "^16.13.1",
         "react-dom": "^16.13.1",
         "readline-sync": "^1.4.10",
-        "ws": "^7.2.3"
+        "ws": "^7.4.6"
     },
     "devDependencies": {
         "@testdeck/mocha": "^0.1.2",
